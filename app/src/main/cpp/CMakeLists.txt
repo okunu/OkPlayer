@@ -3,14 +3,25 @@ cmake_minimum_required(VERSION 3.18.1)
 
 project("demo")
 
-include_directories(include)
+include_directories(
+        include
+        logUtil
+        render
+        glUtil
+    )
+
+
+file(GLOB src-files
+        ${CMAKE_SOURCE_DIR}/*.cpp
+        ${CMAKE_SOURCE_DIR}/glUtil/*.cpp
+        ${CMAKE_SOURCE_DIR}/render/*.cpp)
 
 # 添加本地so库 native-lib：这个是声明引用so库的名称 SHARED：表示共享so库文件
 # 构建so库的源文件
 add_library(
         demo
         SHARED
-        native-lib.cpp
+        ${src-files}
 )
 
 set(SO_DIR ${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
@@ -82,6 +93,12 @@ target_link_libraries(
         avfilter
         avformat
         swscale
+
+        GLESv3
+        EGL
+        android
+        jnigraphics
+
         #ffmpeg------end------------
         ${log-lib}
 )

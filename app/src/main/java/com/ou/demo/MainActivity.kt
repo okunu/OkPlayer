@@ -65,11 +65,4 @@ class MainActivity : AppCompatActivity() {
      * which is packaged with this application.
      */
     external fun stringFromJNI(): String
-
-    companion object {
-        // Used to load the 'demo' library on application startup.
-        init {
-            System.loadLibrary("demo")
-        }
-    }
 }

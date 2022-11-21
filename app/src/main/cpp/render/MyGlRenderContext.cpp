@@ -5,6 +5,7 @@
 #include "MyGlRenderContext.h"
 #include "TextureSample.h"
 #include "RenderType.h"
+#include "VaoSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -61,6 +62,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new TriangleSample();
     } else if (type == RenderType::Texture) {
         mSample = new TextureSample();
+    } else if (type == RenderType::Vao) {
+        mSample = new VaoSample();
     }
 }
 

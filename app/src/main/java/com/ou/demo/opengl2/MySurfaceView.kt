@@ -34,13 +34,13 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
 
         override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
             Util.log("onSurfaceCreate---- surface = ${holder.surface}")
-            nativeRender.native_init(RenderType.Vao.ordinal)
+            nativeRender.native_init(RenderType.Texture.ordinal)
             nativeRender.native_onSurfaceCreate(holder.surface)
         }
 
         override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
             Util.log("onSurfaceChanged----")
-            var bitmap = BitmapFactory.decodeResource(resources, R.mipmap.jj)
+            var bitmap = BitmapFactory.decodeResource(resources, R.mipmap.lyf)
             glNativeRender?.setBitmapData(bitmap)
             nativeRender.native_onSurfaceChanged(width, height)
         }

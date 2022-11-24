@@ -39,10 +39,10 @@ void TextureSample::draw() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     GLfloat verticesCoords[] = {
-            -1.0f,  0.5f, 0.0f,  // Position 0
-            -1.0f, -0.5f, 0.0f,  // Position 1
-            1.0f, -0.5f, 0.0f,   // Position 2
-            1.0f,  0.5f, 0.0f,   // Position 3
+            -0.6f,  0.6f, 0.0f,  // Position 0
+            -0.6f, -0.6f, 0.0f,  // Position 1
+            0.6f, -0.6f, 0.0f,   // Position 2
+            0.6f,  0.6f, 0.0f,   // Position 3
     };
 
     GLfloat textureCoords[] = {

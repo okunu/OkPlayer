@@ -28,7 +28,6 @@ GLuint GLUtils::loadShader(GLenum shaderType, const char *pSource) {
                 shader = 0;
             }
         }
-        delete[] pSource;
         return shader;
     }
 }

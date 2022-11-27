@@ -26,7 +26,7 @@ public:
     void swapBuffer();
     void setBitmapData(void* data, int width, int height);
     void setAssetManager(AAssetManager* manager);
-    char* getAssetResource(const std::string& path);
+    std::string getAssetResource(const std::string& path);
     void initSampler(int type);
 
     static MyGlRenderContext* getInstance();

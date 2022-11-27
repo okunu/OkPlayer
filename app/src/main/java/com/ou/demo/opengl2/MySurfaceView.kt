@@ -34,7 +34,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
 
         override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
             Util.log("onSurfaceCreate---- surface = ${holder.surface}")
-            nativeRender.native_init(RenderType.Texture.ordinal)
+            nativeRender.native_init(RenderType.Triangle.ordinal)
             nativeRender.native_onSurfaceCreate(holder.surface)
         }
 

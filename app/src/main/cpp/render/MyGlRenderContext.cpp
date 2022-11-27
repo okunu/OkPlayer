@@ -67,7 +67,7 @@ void MyGlRenderContext::initSampler(int type) {
     }
 }
 
-char* MyGlRenderContext::getAssetResource(const std::string &path) {
+std::string MyGlRenderContext::getAssetResource(const std::string &path) {
     if (manager == nullptr) {
         LOGI("manager is null");
         return nullptr;
@@ -87,7 +87,9 @@ char* MyGlRenderContext::getAssetResource(const std::string &path) {
         return nullptr;
     }
     buffer[len] = '\0';
-    return buffer;
+    std::string result(buffer);
+    delete[] buffer;
+    return result;
 }
 
 void MyGlRenderContext::swapBuffer() {

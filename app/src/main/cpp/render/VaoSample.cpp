@@ -23,13 +23,14 @@ void VaoSample::init() {
     if (m_ProgramObj != 0) {
         return;
     }
-    char* vShaderStr = MyGlRenderContext::getInstance()->getAssetResource("vao/vao.vert");
-    LOGI("init----vShaderStr = %s", vShaderStr);
+    auto vShaderStr = MyGlRenderContext::getInstance()->getAssetResource("vao/vao.vert");
+    LOGI("init----vShaderStr = %s", vShaderStr.data());
 
-    char* fShaderStr = MyGlRenderContext::getInstance()->getAssetResource("vao/vao.frag");
-    LOGI("init----fShaderStr = %s", fShaderStr);
+    auto fShaderStr = MyGlRenderContext::getInstance()->getAssetResource("vao/vao.frag");
+    LOGI("init----fShaderStr = %s", fShaderStr.data());
 
-    m_ProgramObj = GLUtils::createProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::createProgram(vShaderStr.data(), fShaderStr.data(),
+                                          m_VertexShader, m_FragmentShader);
     LOGI("m_ProgramObj = %d", m_ProgramObj);
 
     prepareData();

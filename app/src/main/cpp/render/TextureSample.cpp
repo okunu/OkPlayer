@@ -21,9 +21,10 @@ void TextureSample::init() {
 
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
-    char* vShaderStr = MyGlRenderContext::getInstance()->getAssetResource("texture/texture.vert");
-    char* fShaderStr = MyGlRenderContext::getInstance()->getAssetResource("texture/texture.frag");
-    m_ProgramObj = GLUtils::createProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    auto vShaderStr = MyGlRenderContext::getInstance()->getAssetResource("texture/texture.vert");
+    auto fShaderStr = MyGlRenderContext::getInstance()->getAssetResource("texture/texture.frag");
+    m_ProgramObj = GLUtils::createProgram(vShaderStr.data(), fShaderStr.data(),
+                                          m_VertexShader, m_FragmentShader);
     if (m_ProgramObj) {
         m_SamplerLoc = glGetUniformLocation(m_ProgramObj, "s_TextureMap");
     } else {

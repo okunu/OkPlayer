@@ -14,10 +14,11 @@ void TriangleSample::init() {
         return;
     }
 
-    char* vShaderStr = MyGlRenderContext::getInstance()->getAssetResource("triangle/triangle.vert");
-    char* fShaderStr = MyGlRenderContext::getInstance()->getAssetResource("triangle/triangle.frag");
+    auto vShaderStr = MyGlRenderContext::getInstance()->getAssetResource("triangle/triangle.vert");
+    auto fShaderStr = MyGlRenderContext::getInstance()->getAssetResource("triangle/triangle.frag");
 
-    m_ProgramObj = GLUtils::createProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::createProgram(vShaderStr.data(), fShaderStr.data(),
+                                          m_VertexShader, m_FragmentShader);
     LOGI("m_ProgramObj = %d", m_ProgramObj);
 
 }

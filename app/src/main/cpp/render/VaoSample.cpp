@@ -61,24 +61,22 @@ void VaoSample::prepareData() {
             1, 2, 3  // 第二个三角形
     };
 
-    glGenBuffers(2, mVboIds);
-    glBindBuffer(GL_ARRAY_BUFFER, mVboIds[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mVboIds[1]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
     glGenVertexArrays(1, &mVaoId);
     glBindVertexArray(mVaoId);
 
+    glGenBuffers(2, mVboIds);
+
     glBindBuffer(GL_ARRAY_BUFFER, mVboIds[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (const void*)0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6* sizeof(float), (const void*)(3 * sizeof(float)));
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mVboIds[1]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glBindVertexArray(GL_NONE);
-
 }
 
 void VaoSample::draw() {

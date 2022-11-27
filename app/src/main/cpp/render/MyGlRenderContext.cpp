@@ -6,6 +6,7 @@
 #include "TextureSample.h"
 #include "RenderType.h"
 #include "VaoSample.h"
+#include "YuvSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -64,7 +65,17 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new TextureSample();
     } else if (type == RenderType::Vao) {
         mSample = new VaoSample();
+    } else if (type == RenderType::Yuv) {
+        mSample = new YuvSample();
     }
+}
+
+AAssetManager* MyGlRenderContext::getAsset() {
+    if (manager == nullptr) {
+        LOGI("manager is null");
+        return nullptr;
+    }
+    return manager;
 }
 
 std::string MyGlRenderContext::getAssetResource(const std::string &path) {

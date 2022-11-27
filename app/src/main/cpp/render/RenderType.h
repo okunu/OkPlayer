@@ -8,6 +8,6 @@
 #define Triangle_Type 1
 #define Texture_Type 2
 
-enum RenderType {Triangle, Texture, Vao};
+enum RenderType {Triangle, Texture, Vao, Yuv};
 
 #endif //DEMO_RENDERTYPE_H

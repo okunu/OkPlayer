@@ -28,6 +28,7 @@ public:
     void setAssetManager(AAssetManager* manager);
     std::string getAssetResource(const std::string& path);
     void initSampler(int type);
+    AAssetManager* getAsset();
 
     static MyGlRenderContext* getInstance();
     static void releaseInstance();

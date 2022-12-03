@@ -23,7 +23,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
             glRender = MyGlRender(it)
         }
         setRenderer(glRender)
-        renderMode = RENDERMODE_WHEN_DIRTY
+//        renderMode = RENDERMODE_WHEN_DIRTY
     }
 
     inner class MyGlRender(val nativeRender: MyNativeRender): GLSurfaceView.Renderer {

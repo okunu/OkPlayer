@@ -22,10 +22,9 @@ private:
     void prepareTexture();
 
 private:
-    GLuint mVaoId;
-    GLuint yTextureId;
-    GLuint uTextureId;
-    GLuint vTextureId;
+    GLuint texture[3];
+    unsigned int VBO;
+    unsigned int EBO;
 };
 
 

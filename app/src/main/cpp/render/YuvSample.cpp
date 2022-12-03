@@ -7,7 +7,7 @@
 #include "LogUtil.h"
 #include <unistd.h>
 
-YuvSample::YuvSample(): mVaoId(0), yTextureId(0), uTextureId(0), vTextureId(0) {
+YuvSample::YuvSample(): texture{0}, VBO(0), EBO(0){
 }
 
 YuvSample::~YuvSample() noexcept {
@@ -24,6 +24,7 @@ void YuvSample::init() {
                                           m_VertexShader, m_FragmentShader);
     LOGI("m_ProgramObj = %d", m_ProgramObj);
     prepareData();
+    prepareTexture();
 }
 
 void YuvSample::prepareData() {
@@ -37,85 +38,48 @@ void YuvSample::prepareData() {
 
     unsigned int indices[] = {0, 1, 2, 0, 2, 3};
 
-    //生成vao并绑定vao
-    glGenVertexArrays(1, &mVaoId);
-    glBindVertexArray(mVaoId);
-
-    GLuint vboIds[2];
-    glGenBuffers(2, vboIds);
-    //绑定vbo[0]，GL_ARRAY_BUFFER类型的buffer，它只能有一个，所有三角形顶点和纹理就放在一起解析了
-    glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
+    glGenBuffers(1, &VBO);
+    //绑定VBO，GL_ARRAY_BUFFER类型的buffer，它只能有一个，所有三角形顶点和纹理就放在一起解析了
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(verticesCoords), verticesCoords, GL_STATIC_DRAW);
+
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5* sizeof(float), (const void*)0);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5* sizeof(float), (const void*)3);
-    //绑定vbo[1]，GL_ELEMENT_ARRAY_BUFFER
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5* sizeof(float), (const void*)(3 * sizeof(float)));
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    //绑定EBO，GL_ELEMENT_ARRAY_BUFFER
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glBindVertexArray(GL_NONE);
-
-    prepareTexture();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void YuvSample::prepareTexture() {
     int width = 640;
     int height = 272;
     //处理纹理
-    glGenTextures(1, &yTextureId);
-    glBindTexture(GL_TEXTURE_2D, yTextureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glGenTextures(3, texture);
+    glBindTexture(GL_TEXTURE_2D, texture[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,//细节基本 默认0
-                 GL_LUMINANCE,//gpu内部格式 亮度，灰度图（这里就是只取一个亮度的颜色通道的意思）
-                  width,//加载的纹理宽度。最好为2的次幂(这里对y分量数据当做指定尺寸算，但显示尺寸会拉伸到全屏？)
-                  height,//加载的纹理高度。最好为2的次幂
-                 0,//纹理边框
-                 GL_LUMINANCE,//数据的像素格式 亮度，灰度图
-                 GL_UNSIGNED_BYTE,//像素点存储的数据类型
-                 NULL //纹理的数据（先不传）
-    );
-    glBindTexture(GL_TEXTURE_2D, GL_NONE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width, height, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, NULL);
 
-    glGenTextures(1, &uTextureId);
-    glBindTexture(GL_TEXTURE_2D, uTextureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, texture[1]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,//细节基本 默认0
-                 GL_LUMINANCE,//gpu内部格式 亮度，灰度图（这里就是只取一个亮度的颜色通道的意思）
-                 width/2,//加载的纹理宽度。最好为2的次幂(这里对y分量数据当做指定尺寸算，但显示尺寸会拉伸到全屏？)
-                 height/2,//加载的纹理高度。最好为2的次幂
-                 0,//纹理边框
-                 GL_LUMINANCE,//数据的像素格式 亮度，灰度图
-                 GL_UNSIGNED_BYTE,//像素点存储的数据类型
-                 NULL //纹理的数据（先不传）
-    );
-    glBindTexture(GL_TEXTURE_2D, GL_NONE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width/2, height/2, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, NULL);
 
-    glGenTextures(1, &vTextureId);
-    glBindTexture(GL_TEXTURE_2D, vTextureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, texture[2]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,//细节基本 默认0
-                 GL_LUMINANCE,//gpu内部格式 亮度，灰度图（这里就是只取一个亮度的颜色通道的意思）
-                 width/2,//加载的纹理宽度。最好为2的次幂(这里对y分量数据当做指定尺寸算，但显示尺寸会拉伸到全屏？)
-                 height/2,//加载的纹理高度。最好为2的次幂
-                 0,//纹理边框
-                 GL_LUMINANCE,//数据的像素格式 亮度，灰度图
-                 GL_UNSIGNED_BYTE,//像素点存储的数据类型
-                 NULL //纹理的数据（先不传）
-    );
-    glBindTexture(GL_TEXTURE_2D, GL_NONE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width/2, height/2, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, NULL);
 }
 
 void YuvSample::draw() {
@@ -124,12 +88,22 @@ void YuvSample::draw() {
     }
     glClearColor(1.0, 1.0, 1.0, 1.0);
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(m_ProgramObj);
-    glBindVertexArray(mVaoId);
 
-    //这里处理纹理
+    //获取默认的display以及winsurface，绘制好一帧后swap，否则后面的帧无法显示
+    //因为java端的glsurfaceview中已经处理好了相关的egl逻辑，如果我们要写就必须写全套，比较麻烦，先用这个代替
+    auto display = eglGetCurrentDisplay();
+    auto winSurface = eglGetCurrentSurface(EGL_READ);
+
+    glUseProgram(m_ProgramObj);
+
     int width = 640;
     int height = 272;
+
+    //使用vbo及ebo数据，不用每次绘制都解析
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
+    //这段代码必须每次绘制的时候都调用，不指定的话，颜色会变绿，仔细想想也对，每次绘制的时候必须重新为每个纹理指定标号，不能只在初始化的时候指定一次
     glUniform1i(glGetUniformLocation(m_ProgramObj, "yTexture"), 0);
     glUniform1i(glGetUniformLocation(m_ProgramObj, "uTexture"), 1);
     glUniform1i(glGetUniformLocation(m_ProgramObj, "vTexture"), 2);
@@ -138,43 +112,48 @@ void YuvSample::draw() {
     buf[0] = new unsigned char[width * height];
     buf[1] = new unsigned char[width * height / 4];
     buf[2] = new unsigned char[width * height / 4];
-    auto manager = MyGlRenderContext::getInstance()->getAsset();
-    AAsset* asset = AAssetManager_open(manager, "res/video1_640_272.yuv", AASSET_MODE_STREAMING);
-    off_t length = AAsset_getLength(asset);
-    long frameCount = length / (width * height * 3 / 2);
-    LOGI("frameCount:%d", frameCount);
+
+    AAssetManager* asManager = MyGlRenderContext::getInstance()->getAsset();
+    AAsset* dataAsset = AAssetManager_open(asManager, "res/video1_640_272.yuv", AASSET_MODE_STREAMING);
+
+    off_t bufferSize = AAsset_getLength(dataAsset);
+    long frameCount = bufferSize / (width * height * 3 / 2);
+    LOGI("frameCount%d", frameCount);
+
     for (int i = 0; i < frameCount; ++i) {
-        int yread = AAsset_read(asset, buf[0], width * height);
-        int uread = AAsset_read(asset, buf[1], width * height / 4);
-        int vread = AAsset_read(asset, buf[2], width * height / 4);
+        int bufYRead = AAsset_read(dataAsset, buf[0], width * height);
+        int bufURead = AAsset_read(dataAsset, buf[1], width * height / 4);
+        int bufVRead = AAsset_read(dataAsset, buf[2], width * height / 4);
 
-        LOGI("i:%d", i);
-
-        if (yread <= 0 || uread <= 0 || vread <= 0) {
-            AAsset_close(asset);
+        if (bufYRead <= 0 || bufURead <= 0 || bufVRead <= 0) {
+            AAsset_close(dataAsset);
             return;
         }
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, yTextureId);
+        glBindTexture(GL_TEXTURE_2D, texture[0]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
                         GL_LUMINANCE, GL_UNSIGNED_BYTE, buf[0]);
 
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, uTextureId);
+        glBindTexture(GL_TEXTURE_2D, texture[1]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width/2, height/2,
                         GL_LUMINANCE, GL_UNSIGNED_BYTE, buf[1]);
 
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, vTextureId);
+        glBindTexture(GL_TEXTURE_2D, texture[2]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width/2, height/2,
                         GL_LUMINANCE, GL_UNSIGNED_BYTE, buf[2]);
 
-        //注意，glDrawElements函数的第三个参数，本例中为GL_UNSIGNED_INT，必须要与indices数组的类型相同，如果不同，绘制会失败
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (const void*)0);
-//        usleep(20000);
-    }
 
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        eglSwapBuffers(display, winSurface);
+        usleep(20000);
+    }
     glBindVertexArray(GL_NONE);
-    AAsset_close(asset);
+    AAsset_close(dataAsset);
+    delete[] buf[0];
+    delete[] buf[1];
+    delete[] buf[2];
 }

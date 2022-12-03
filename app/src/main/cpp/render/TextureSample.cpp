@@ -30,6 +30,39 @@ void TextureSample::init() {
     } else {
         LOGI("create program failed");
     }
+    prepareData();
+}
+
+void TextureSample::prepareData() {
+    //这里包含了三角形顶点坐标，也包含了纹理顶点坐标，和解析颜色一样解析
+    GLfloat verticesCoords[] = {
+            -0.6f,  0.6f, 0.0f,  0.0f,  0.0f,// Position 0
+            -0.6f, -0.6f, 0.0f,  0.0f,  1.0f,// Position 1
+            0.6f, -0.6f, 0.0f,   1.0f,  1.0f,// Position 2
+            0.6f,  0.6f, 0.0f,  1.0f,  0.0f // Position 3
+    };
+
+    unsigned int indices[] = {0, 1, 2, 0, 2, 3};
+
+    //生成vao并绑定vao
+    glGenVertexArrays(1, &mVaoId);
+    glBindVertexArray(mVaoId);
+
+    unsigned int vboIds[2];
+    glGenBuffers(2, vboIds);
+
+    //绑定vbo[0]，GL_ARRAY_BUFFER类型的buffer，它只能有一个，所有三角形顶点和纹理就放在一起解析了
+    glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesCoords), verticesCoords, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5* sizeof(float), (const void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5* sizeof(float), (const void*)(3 * sizeof(float)));
+    //绑定vbo[1]，GL_ELEMENT_ARRAY_BUFFER
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glBindVertexArray(GL_NONE);
 }
 
 void TextureSample::draw() {
@@ -38,34 +71,15 @@ void TextureSample::draw() {
     }
     glClearColor(1.0f, 1.0f, 1.0f, 1);
     glClear(GL_COLOR_BUFFER_BIT);
-
-    GLfloat verticesCoords[] = {
-            -0.6f,  0.6f, 0.0f,  // Position 0
-            -0.6f, -0.6f, 0.0f,  // Position 1
-            0.6f, -0.6f, 0.0f,   // Position 2
-            0.6f,  0.6f, 0.0f,   // Position 3
-    };
-
-    GLfloat textureCoords[] = {
-            0.0f,  0.0f,        // TexCoord 0
-            0.0f,  1.0f,        // TexCoord 1
-            1.0f,  1.0f,        // TexCoord 2
-            1.0f,  0.0f         // TexCoord 3
-    };
-
-    GLushort indices[] = {0, 1, 2, 0, 2, 3};
-
     glUseProgram(m_ProgramObj);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), verticesCoords);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GL_FLOAT), textureCoords);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(mVaoId);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_TextureId);
     //如果只有一个纹理，那么这里可以不指定，系统默认会为我们赋值。
     glUniform1i(m_SamplerLoc, 0);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (const void*)0);
 }
 
 bool TextureSample::hasTextureSample() {

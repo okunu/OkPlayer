@@ -16,8 +16,10 @@ public:
     void draw();
     bool hasTextureSample();
     void initTextureData(void* data, int width, int height);
+    void prepareData();
 
 private:
+    unsigned int mVaoId;
     GLuint m_TextureId;
     GLint m_SamplerLoc;
 };

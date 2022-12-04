@@ -149,9 +149,8 @@ void YuvSample::draw() {
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         eglSwapBuffers(display, winSurface);
-        usleep(20000);
+        //usleep(20000);
     }
-    glBindVertexArray(GL_NONE);
     AAsset_close(dataAsset);
     delete[] buf[0];
     delete[] buf[1];

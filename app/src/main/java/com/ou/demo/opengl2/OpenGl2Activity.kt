@@ -13,4 +13,14 @@ class OpenGl2Activity: AppCompatActivity() {
         binding = ActivityOpengl2Binding.inflate(layoutInflater)
         setContentView(binding.root)
     }
+
+    override fun onPause() {
+        super.onPause()
+        binding.yuv.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        binding.yuv.onResume()
+    }
 }

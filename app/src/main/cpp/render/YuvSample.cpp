@@ -59,8 +59,8 @@ void YuvSample::prepareData() {
 }
 
 void YuvSample::prepareTexture() {
-    int width = 640;
-    int height = 272;
+    int width = 576;
+    int height = 1024;
     //处理纹理
     glGenTextures(3, texture);
     glBindTexture(GL_TEXTURE_2D, texture[0]);
@@ -96,8 +96,8 @@ void YuvSample::draw() {
 
     glUseProgram(m_ProgramObj);
 
-    int width = 640;
-    int height = 272;
+    int width = 576;
+    int height = 1024;
 
     //使用vbo及ebo数据，不用每次绘制都解析
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -114,7 +114,7 @@ void YuvSample::draw() {
     buf[2] = new unsigned char[width * height / 4];
 
     AAssetManager* asManager = MyGlRenderContext::getInstance()->getAsset();
-    AAsset* dataAsset = AAssetManager_open(asManager, "res/video1_640_272.yuv", AASSET_MODE_STREAMING);
+    AAsset* dataAsset = AAssetManager_open(asManager, "res/demo_576_1024.yuv", AASSET_MODE_STREAMING);
 
     off_t bufferSize = AAsset_getLength(dataAsset);
     long frameCount = bufferSize / (width * height * 3 / 2);

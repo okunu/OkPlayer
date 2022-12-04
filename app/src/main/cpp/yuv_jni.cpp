@@ -256,8 +256,8 @@ Java_com_ou_demo_opengl_YuvPlayer_drawYuv(JNIEnv *env, jobject thiz, jobject sur
 
     GLushort indices[] = {0, 1, 2, 0, 2, 3};
 
-    int width = 640;
-    int height = 272;
+    int width = 576;
+    int height = 1024;
 
     glUniform1i(glGetUniformLocation(program, "yTexture"), 0);
     glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
@@ -292,7 +292,7 @@ Java_com_ou_demo_opengl_YuvPlayer_drawYuv(JNIEnv *env, jobject thiz, jobject sur
     buf[2] = new unsigned char[width * height / 4];
 
     AAssetManager* asManager = AAssetManager_fromJava(env, manager);
-    AAsset* dataAsset = AAssetManager_open(asManager, "res/video1_640_272.yuv", AASSET_MODE_STREAMING);
+    AAsset* dataAsset = AAssetManager_open(asManager, "res/demo_576_1024.yuv", AASSET_MODE_STREAMING);
 
     off_t bufferSize = AAsset_getLength(dataAsset);
     long frameCount = bufferSize / (width * height * 3 / 2);

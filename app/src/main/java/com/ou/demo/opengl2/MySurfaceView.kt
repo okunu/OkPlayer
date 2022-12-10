@@ -57,5 +57,6 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
         Texture,
         Vao,
         Yuv,
+        Uniform,
     }
 }

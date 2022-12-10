@@ -7,6 +7,7 @@
 #include "RenderType.h"
 #include "VaoSample.h"
 #include "YuvSample.h"
+#include "UniformSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -67,6 +68,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new VaoSample();
     } else if (type == RenderType::Yuv) {
         mSample = new YuvSample();
+    } else if (type == RenderType::Uniform) {
+        mSample = new UniformSample();
     }
 }
 

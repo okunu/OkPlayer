@@ -88,3 +88,7 @@ void GLUtils::checkGlError(const char *pGLOperation) {
         LOGI("check error operation is %s, glerror is %s", pGLOperation, error);
     }
 }
+
+void GLUtils::setUniformValue1i(GLuint program, const char *name, GLint value) {
+    glUniform1i(glGetUniformLocation(program, name), value);
+}

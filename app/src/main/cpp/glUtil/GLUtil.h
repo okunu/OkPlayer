@@ -17,6 +17,7 @@ public:
                                 GLuint &fragShaderHandle);
     static void deleteProgram(GLuint &program);
     static void checkGlError(const char* pGLOperation);
+    static void setUniformValue1i(GLuint program, const char* name, GLint value);
 };
 
 #endif //DEMO_GLUTIL_H

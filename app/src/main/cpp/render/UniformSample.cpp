@@ -11,7 +11,7 @@ UniformSample::UniformSample(): mVaoId(0) {
 }
 
 void UniformSample::init() {
-    LOGI("VaoSample init");
+    LOGI("UniformSample init");
     if (m_ProgramObj != 0) {
         return;
     }

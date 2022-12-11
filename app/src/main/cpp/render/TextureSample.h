@@ -14,9 +14,8 @@ public:
 
     void init();
     void draw();
-    bool hasTextureSample();
-    void initTextureData(void* data, int width, int height);
     void prepareData();
+    void prepareTexture();
 
 private:
     unsigned int mVaoId;

@@ -60,19 +60,3 @@ Java_com_ou_demo_render_MyNativeRender_native_1onDrawFrame(JNIEnv *env, jobject 
     auto context = MyGlRenderContext::getInstance();
     context->onDrawFrame();
 }
-
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_ou_demo_render_MyNativeRender_setBitmapData(JNIEnv *env, jobject thiz, jobject bitmap) {
-    AndroidBitmapInfo info;
-    void* pixel;
-    if (AndroidBitmap_getInfo(env, bitmap, &info) < 0) {
-        LOGI("get bitmap info failed");
-        return;
-    }
-    AndroidBitmap_lockPixels(env, bitmap, &pixel);
-    auto context = MyGlRenderContext::getInstance();
-    LOGI("bitmap width = %d, height = %d", info.width, info.height);
-    context->setBitmapData(pixel, info.width, info.height);
-    AndroidBitmap_unlockPixels(env, bitmap);
-}

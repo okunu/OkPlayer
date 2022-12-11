@@ -18,12 +18,3 @@ void BaseSample::init() {
 
 void BaseSample::draw() {
 }
-
-bool BaseSample::hasTextureSample() {
-    return false;
-}
-
-void BaseSample::initTextureData(void* data, int width, int height) {
-
-}
-

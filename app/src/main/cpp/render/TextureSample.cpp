@@ -5,22 +5,12 @@
 #include "TextureSample.h"
 #include "LogUtil.h"
 #include "MyGlRenderContext.h"
+#include <thread>
 
 TextureSample::TextureSample(): m_TextureId(0) {
 }
 
 void TextureSample::init() {
-    glGenTextures(1, &m_TextureId);
-    glBindTexture(GL_TEXTURE_2D, m_TextureId);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-// set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glBindTexture(GL_TEXTURE_2D, GL_NONE);
-
     auto vShaderStr = MyGlRenderContext::getInstance()->getAssetResource("texture/texture.vert");
     auto fShaderStr = MyGlRenderContext::getInstance()->getAssetResource("texture/texture.frag");
     m_ProgramObj = GLUtils::createProgram(vShaderStr.data(), fShaderStr.data(),
@@ -31,6 +21,7 @@ void TextureSample::init() {
         LOGI("create program failed");
     }
     prepareData();
+    prepareTexture();
 }
 
 void TextureSample::prepareData() {
@@ -82,14 +73,27 @@ void TextureSample::draw() {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (const void*)0);
 }
 
-bool TextureSample::hasTextureSample() {
-    return true;
-}
-
-void TextureSample::initTextureData(void* data, int width, int height) {
-    glActiveTexture(GL_TEXTURE0);
+void TextureSample::prepareTexture() {
+    glGenTextures(1, &m_TextureId);
     glBindTexture(GL_TEXTURE_2D, m_TextureId);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+// set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    void* lyfPixel = nullptr;
+    int lyfWidth, lyfHeiht;
+    MyGlRenderContext::getInstance()->getBitmap("res/ns.png", &lyfPixel, lyfWidth, lyfHeiht);
+    LOGI("lyfWidth = %d, lyfHeiht = %d, threadid = %d", lyfWidth, lyfHeiht, std::this_thread::get_id());
+    if (lyfPixel == nullptr) {
+        LOGI("pixel is nullptr");
+    } else {
+        LOGI("pixel is not nullptr");
+    }
+    glActiveTexture(GL_TEXTURE0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lyfWidth, lyfHeiht,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, lyfPixel);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 }

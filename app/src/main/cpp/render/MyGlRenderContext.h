@@ -24,9 +24,9 @@ public:
     void onSurfaceChanged(int width, int height);
     void onDrawFrame();
     void swapBuffer();
-    void setBitmapData(void* data, int width, int height);
     void setAssetManager(AAssetManager* manager);
     std::string getAssetResource(const std::string& path);
+    void getBitmap(const char* path, void** data, int& width, int& height);
     void initSampler(int type);
     AAssetManager* getAsset();
 
@@ -38,7 +38,6 @@ private:
     EGLDisplay display;
     EGLSurface winSurface;
     BaseSample* mSample;
-    void* pixel;
     AAssetManager* manager;
 };
 

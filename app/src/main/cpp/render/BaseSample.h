@@ -14,8 +14,6 @@ public:
     virtual ~BaseSample();
     virtual void init();
     virtual void draw();
-    virtual bool hasTextureSample();
-    virtual void initTextureData(void* data, int width, int height);
 
 protected:
     GLuint m_ProgramObj;

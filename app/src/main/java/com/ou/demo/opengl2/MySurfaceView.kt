@@ -33,20 +33,18 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
         }
 
         override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
-            Util.log("onSurfaceCreate---- surface = ${holder.surface}")
-            nativeRender.native_init(RenderType.Uniform.ordinal)
+            Util.log("onSurfaceCreate---- thread = ${Thread.currentThread().name}")
+            nativeRender.native_init(RenderType.TwoTexture.ordinal)
             nativeRender.native_onSurfaceCreate(holder.surface)
         }
 
         override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
-            Util.log("onSurfaceChanged----")
-            var bitmap = BitmapFactory.decodeResource(resources, R.mipmap.lyf)
-            glNativeRender?.setBitmapData(bitmap)
+            Util.log("onSurfaceChanged----thread = ${Thread.currentThread().name}")
             nativeRender.native_onSurfaceChanged(width, height)
         }
 
         override fun onDrawFrame(gl: GL10) {
-            Util.log("onDrawFrame ----")
+            Util.log("onDrawFrame ----thread = ${Thread.currentThread().name}")
             nativeRender.native_onDrawFrame()
         }
 
@@ -58,5 +56,6 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
         Vao,
         Yuv,
         Uniform,
+        TwoTexture,
     }
 }

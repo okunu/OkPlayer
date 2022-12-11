@@ -2,21 +2,35 @@
 // Created by okunu on 2022/10/29.
 //
 
+#include <android/bitmap.h>
 #include "MyGlRenderContext.h"
 #include "TextureSample.h"
 #include "RenderType.h"
 #include "VaoSample.h"
 #include "YuvSample.h"
 #include "UniformSample.h"
+#include "JniHelper.h"
+#include "TwoTextureSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
-MyGlRenderContext::MyGlRenderContext(): pixel(nullptr), mSample(nullptr) {
+jmethodID g_method_get_bitmap = nullptr;
+jclass g_NativeContext_clazz = nullptr;
+
+MyGlRenderContext::MyGlRenderContext(): mSample(nullptr) {
+    auto env = GetJniEnv();
+    g_NativeContext_clazz = static_cast<jclass>(env->NewGlobalRef(
+            env->FindClass("com/ou/demo/nativecontext/NativeContext")));
+    if (g_NativeContext_clazz) {
+        g_method_get_bitmap = env->GetStaticMethodID(g_NativeContext_clazz, "getAssetBitmap",
+                                                     "(Ljava/lang/String;)Landroid/graphics/Bitmap;");
+
+    }
+    LOGI("g_method_get_bitmap = %d,  clazz = %d", g_method_get_bitmap, g_NativeContext_clazz);
 }
 
 MyGlRenderContext::~MyGlRenderContext() {
     delete mSample;
-    pixel = nullptr;
 }
 
 MyGlRenderContext* MyGlRenderContext::getInstance() {
@@ -48,12 +62,6 @@ void MyGlRenderContext::onDrawFrame() {
 //    swapBuffer();
 }
 
-void MyGlRenderContext::setBitmapData(void *data, int width, int height) {
-    if (mSample->hasTextureSample() && data != nullptr) {
-        mSample->initTextureData(data, width, height);
-    }
-}
-
 void MyGlRenderContext::setAssetManager(AAssetManager *manager) {
     this->manager = manager;
 }
@@ -70,6 +78,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new YuvSample();
     } else if (type == RenderType::Uniform) {
         mSample = new UniformSample();
+    } else if (type == RenderType::TwoTexture) {
+        mSample = new TwoTextureSample();
     }
 }
 
@@ -79,6 +89,25 @@ AAssetManager* MyGlRenderContext::getAsset() {
         return nullptr;
     }
     return manager;
+}
+
+//想要初始化指针，就要传指针的指针，否则相当于传值，得到的指针就是个空值，报SEGV_ACCERR异常
+void MyGlRenderContext::getBitmap(const char* path, void** data, int &width, int &height) {
+    if (g_method_get_bitmap) {
+        auto env = GetJniEnv();
+        auto jPath = env->NewStringUTF(path);
+        auto bitmap = env->CallStaticObjectMethod(g_NativeContext_clazz, g_method_get_bitmap, jPath);
+        AndroidBitmapInfo info;
+        if (AndroidBitmap_getInfo(env, bitmap, &info) < 0) {
+            LOGI("get bitmap info failed");
+            return;
+        }
+        AndroidBitmap_lockPixels(env, bitmap, data);
+        width = info.width;
+        height = info.height;
+        LOGI("bitmap width = %d, height = %d", info.width, info.height);
+        AndroidBitmap_unlockPixels(env, bitmap);
+    }
 }
 
 std::string MyGlRenderContext::getAssetResource(const std::string &path) {

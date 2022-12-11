@@ -23,7 +23,8 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
             glRender = MyGlRender(it)
         }
         setRenderer(glRender)
-//        renderMode = RENDERMODE_WHEN_DIRTY
+        //不设置这个就会不停地刷新，设置这个就会有需要再刷新，比如uniform时就需要取消这个设置
+        //renderMode = RENDERMODE_WHEN_DIRTY
     }
 
     inner class MyGlRender(val nativeRender: MyNativeRender): GLSurfaceView.Renderer {

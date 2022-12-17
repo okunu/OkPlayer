@@ -41,7 +41,5 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
         return JNI_EVERSION;
     }
     InitializeJniHelper(vm);
-    auto jnienv = GetJniEnv();
-    LOGI("env = %p", jnienv);
     return JNI_VER;
 }

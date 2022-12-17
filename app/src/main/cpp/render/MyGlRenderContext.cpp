@@ -24,7 +24,6 @@ MyGlRenderContext::MyGlRenderContext(): mSample(nullptr) {
     if (g_NativeContext_clazz) {
         g_method_get_bitmap = env->GetStaticMethodID(g_NativeContext_clazz, "getAssetBitmap",
                                                      "(Ljava/lang/String;)Landroid/graphics/Bitmap;");
-
     }
     LOGI("g_method_get_bitmap = %d,  clazz = %d", g_method_get_bitmap, g_NativeContext_clazz);
 }

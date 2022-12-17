@@ -3,6 +3,7 @@
 //
 
 #include "JniHelper.h"
+#include "LogUtil.h"
 
 JavaVM* s_jni_vm = nullptr;
 
@@ -11,12 +12,15 @@ void InitializeJniHelper(JavaVM* vm) {
 }
 
 JNIEnv* GetJniEnv(){
-    JNIEnv* env = nullptr;
-    JavaVMAttachArgs args;
-    args.version = JNI_VERSION_1_4;
-    args.name = "pthread-test";
-    args.group = NULL;
-    s_jni_vm->AttachCurrentThread(&env, &args);
-    s_jni_vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_4);
-    return env;
+    if (s_jni_vm == NULL) return NULL;
+    JNIEnv *jni_env = NULL;
+    int status = s_jni_vm->GetEnv((void **)&jni_env, JNI_VERSION_1_6);
+    LOGI("status = %d", status);
+    if (status == JNI_EDETACHED || jni_env == NULL) {
+        status = s_jni_vm->AttachCurrentThread(&jni_env, NULL);
+        if (status < 0) {
+            jni_env = NULL;
+        }
+    }
+    return jni_env;
 }

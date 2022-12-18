@@ -16,7 +16,7 @@ public:
     void draw() override;
 
     void prepareData();
-
+    void prepareTexture() override;
 private:
     GLuint mVaoId;
 };

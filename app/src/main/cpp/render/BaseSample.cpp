@@ -18,3 +18,7 @@ void BaseSample::init() {
 
 void BaseSample::draw() {
 }
+
+void BaseSample::prepareData() {}
+
+void BaseSample::prepareTexture() {}

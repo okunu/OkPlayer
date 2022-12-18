@@ -18,6 +18,8 @@ public:
 
     void init();
     void draw();
+    void prepareData() override;
+    void prepareTexture() override;
 };
 
 

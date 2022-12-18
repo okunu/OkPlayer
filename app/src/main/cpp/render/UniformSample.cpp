@@ -67,3 +67,5 @@ void UniformSample::draw() {
     glBindVertexArray(GL_NONE);
     glUseProgram(GL_NONE);
 }
+
+void UniformSample::prepareTexture() {}

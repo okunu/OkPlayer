@@ -14,6 +14,8 @@ public:
     virtual ~BaseSample();
     virtual void init();
     virtual void draw();
+    virtual void prepareData();
+    virtual void prepareTexture();
 
 protected:
     GLuint m_ProgramObj;

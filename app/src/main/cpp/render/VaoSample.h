@@ -18,7 +18,7 @@ public:
 
 private:
     void prepareData();
-
+    void prepareTexture() override;
 private:
     GLuint mVaoId;
     GLuint mVboIds[2];

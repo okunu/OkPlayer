@@ -4,6 +4,7 @@
 
 #include "GLUtil.h"
 #include "LogUtil.h"
+#include <chrono>
 
 GLuint GLUtils::loadShader(GLenum shaderType, const char *pSource) {
     LOGI("create shader = %d  source = %s", shaderType, pSource);
@@ -91,4 +92,13 @@ void GLUtils::checkGlError(const char *pGLOperation) {
 
 void GLUtils::setUniformValue1i(GLuint program, const char *name, GLint value) {
     glUniform1i(glGetUniformLocation(program, name), value);
+}
+
+std::time_t GLUtils::getTimeStamp()
+{
+    std::chrono::time_point<std::chrono::system_clock,std::chrono::milliseconds> tp = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+    auto tmp=std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch());
+    std::time_t timestamp = tmp.count();
+    //std::time_t timestamp = std::chrono::system_clock::to_time_t(tp);
+    return timestamp;
 }

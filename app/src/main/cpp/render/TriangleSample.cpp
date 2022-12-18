@@ -43,6 +43,10 @@ void TriangleSample::draw() {
     glUseProgram(GL_NONE);
 }
 
+void TriangleSample::prepareData() {}
+
+void TriangleSample::prepareTexture() {}
+
 
 
 

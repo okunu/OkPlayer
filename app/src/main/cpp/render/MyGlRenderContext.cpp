@@ -11,6 +11,7 @@
 #include "UniformSample.h"
 #include "JniHelper.h"
 #include "TwoTextureSample.h"
+#include "TransformSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -79,6 +80,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new UniformSample();
     } else if (type == RenderType::TwoTexture) {
         mSample = new TwoTextureSample();
+    } else if (type == RenderType::Transform) {
+        mSample = new TransformSample();
     }
 }
 

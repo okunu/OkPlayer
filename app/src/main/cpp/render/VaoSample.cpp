@@ -91,3 +91,5 @@ void VaoSample::draw() {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (const void*)0);
     glBindVertexArray(GL_NONE);
 }
+
+void VaoSample::prepareTexture() {}

@@ -24,7 +24,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
         }
         setRenderer(glRender)
         //不设置这个就会不停地刷新，设置这个就会有需要再刷新，比如uniform时就需要取消这个设置
-        renderMode = RENDERMODE_WHEN_DIRTY
+//        renderMode = RENDERMODE_WHEN_DIRTY
     }
 
     inner class MyGlRender(val nativeRender: MyNativeRender): GLSurfaceView.Renderer {
@@ -35,7 +35,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
 
         override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
             Util.log("onSurfaceCreate---- thread = ${Thread.currentThread().name}")
-            nativeRender.native_init(RenderType.TwoTexture.ordinal)
+            nativeRender.native_init(RenderType.Transform.ordinal)
             nativeRender.native_onSurfaceCreate(holder.surface)
         }
 
@@ -58,5 +58,6 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
         Yuv,
         Uniform,
         TwoTexture,
+        Transform,
     }
 }

@@ -56,7 +56,7 @@ Java_com_ou_demo_render_MyNativeRender_native_1onSurfaceChanged(JNIEnv *env, job
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_ou_demo_render_MyNativeRender_native_1onDrawFrame(JNIEnv *env, jobject thiz) {
-    LOGI("jni surface draw");
+//    LOGI("jni surface draw");
     auto context = MyGlRenderContext::getInstance();
     context->onDrawFrame();
 }

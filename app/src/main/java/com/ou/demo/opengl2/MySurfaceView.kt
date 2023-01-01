@@ -45,7 +45,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
         }
 
         override fun onDrawFrame(gl: GL10) {
-            Util.log("onDrawFrame ----thread = ${Thread.currentThread().name}")
+//            Util.log("onDrawFrame ----thread = ${Thread.currentThread().name}")
             nativeRender.native_onDrawFrame()
         }
 

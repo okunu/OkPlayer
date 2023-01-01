@@ -19,7 +19,7 @@ public:
     static void deleteProgram(GLuint &program);
     static void checkGlError(const char* pGLOperation);
     static void setUniformValue1i(GLuint program, const char* name, GLint value);
-    static std::time_t getTimeStamp();
+    static float getTimeStamp();
 };
 
 #endif //DEMO_GLUTIL_H

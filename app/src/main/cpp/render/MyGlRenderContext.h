@@ -29,6 +29,8 @@ public:
     void getBitmap(const char* path, void** data, int& width, int& height);
     void initSampler(int type);
     AAssetManager* getAsset();
+    int getWidth() {return mWidth;}
+    int getHeight() { return mHeight;}
 
     static MyGlRenderContext* getInstance();
     static void releaseInstance();
@@ -39,6 +41,8 @@ private:
     EGLSurface winSurface;
     BaseSample* mSample;
     AAssetManager* manager;
+    int mWidth;
+    int mHeight;
 };
 
 #endif //DEMO_MYGLRENDERCONTEXT_H

@@ -12,6 +12,7 @@
 #include "JniHelper.h"
 #include "TwoTextureSample.h"
 #include "TransformSample.h"
+#include "CubeSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -55,6 +56,8 @@ void MyGlRenderContext::onSurfaceCreated() {
 
 void MyGlRenderContext::onSurfaceChanged(int width, int height) {
     glViewport(0, 0, width, height);
+    mWidth = width;
+    mHeight = height;
 }
 
 void MyGlRenderContext::onDrawFrame() {
@@ -82,6 +85,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new TwoTextureSample();
     } else if (type == RenderType::Transform) {
         mSample = new TransformSample();
+    } else if (type == RenderType::cube) {
+        mSample = new CubeSample();
     }
 }
 

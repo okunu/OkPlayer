@@ -35,7 +35,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
 
         override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
             Util.log("onSurfaceCreate---- thread = ${Thread.currentThread().name}")
-            nativeRender.native_init(RenderType.Transform.ordinal)
+            nativeRender.native_init(RenderType.cube.ordinal)
             nativeRender.native_onSurfaceCreate(holder.surface)
         }
 
@@ -59,5 +59,6 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
         Uniform,
         TwoTexture,
         Transform,
+        cube,
     }
 }

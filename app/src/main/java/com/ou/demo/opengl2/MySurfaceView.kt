@@ -1,12 +1,8 @@
 package com.ou.demo.opengl2
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
-import android.view.Surface
-import android.view.SurfaceHolder
-import com.ou.demo.R
 import com.ou.demo.render.MyNativeRender
 import com.ou.demo.util.Util
 import javax.microedition.khronos.egl.EGLConfig
@@ -35,7 +31,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
 
         override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
             Util.log("onSurfaceCreate---- thread = ${Thread.currentThread().name}")
-            nativeRender.native_init(RenderType.cube.ordinal)
+            nativeRender.native_init(RenderType.ComplexCube.ordinal)
             nativeRender.native_onSurfaceCreate(holder.surface)
         }
 
@@ -59,6 +55,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
         Uniform,
         TwoTexture,
         Transform,
-        cube,
+        Cube,
+        ComplexCube
     }
 }

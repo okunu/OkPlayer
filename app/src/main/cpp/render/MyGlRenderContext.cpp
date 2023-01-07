@@ -13,6 +13,7 @@
 #include "TwoTextureSample.h"
 #include "TransformSample.h"
 #include "CubeSample.h"
+#include "ComplexCubeSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -85,8 +86,10 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new TwoTextureSample();
     } else if (type == RenderType::Transform) {
         mSample = new TransformSample();
-    } else if (type == RenderType::cube) {
+    } else if (type == RenderType::Cube) {
         mSample = new CubeSample();
+    } else if (type == RenderType::ComplexCube) {
+        mSample = new ComplexCubeSample();
     }
 }
 

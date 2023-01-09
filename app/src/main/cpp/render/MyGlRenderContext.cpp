@@ -5,7 +5,7 @@
 #include <android/bitmap.h>
 #include "MyGlRenderContext.h"
 #include "TextureSample.h"
-#include "RenderType.h"
+#include "CommonData.h"
 #include "VaoSample.h"
 #include "YuvSample.h"
 #include "UniformSample.h"
@@ -64,6 +64,14 @@ void MyGlRenderContext::onSurfaceChanged(int width, int height) {
 void MyGlRenderContext::onDrawFrame() {
     mSample->draw();
 //    swapBuffer();
+}
+
+void MyGlRenderContext::changeDirection(int direction) {
+    mSample->changeDirection(direction);
+}
+
+void MyGlRenderContext::setAngle(float yaw, float pitch) {
+    mSample->setAngle(yaw, pitch);
 }
 
 void MyGlRenderContext::setAssetManager(AAssetManager *manager) {

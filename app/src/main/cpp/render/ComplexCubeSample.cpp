@@ -5,11 +5,13 @@
 #include "ComplexCubeSample.h"
 #include "LogUtil.h"
 #include "MyGlRenderContext.h"
-#include "glm-0.9.9.8/glm/glm.hpp"
-#include "glm-0.9.9.8/glm/gtx/transform.hpp"
-#include "glm-0.9.9.8/glm/gtc/type_ptr.hpp"
+#include "CommonData.h"
 
-ComplexCubeSample::ComplexCubeSample(): mVao(0), mFirstId(0), mSecId(0), degree(0.0f) {}
+ComplexCubeSample::ComplexCubeSample(): mVao(0), mFirstId(0), mSecId(0), degree(0.0f) {
+    cameraPos   = glm::vec3(0.0f, 0.0f,  13.0f);
+    cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+}
 
 ComplexCubeSample::~ComplexCubeSample() noexcept {}
 
@@ -159,13 +161,14 @@ void ComplexCubeSample::draw() {
 
     degree = degree + 1.0f;
 
-    float radius = 10.0f;
+    float radius = 8.0f;
     float temp = degree * 0.01;
     float camX = sin(temp) * radius;
     float camZ = cos(temp) * radius;
-    view = glm::lookAt(glm::vec3(camX, 0.0, camZ),
-                       glm::vec3(0.0, 0.0, 0.0),
-                       glm::vec3(0.0, 1.0, 0.0));
+//    cameraPos = glm::vec3(camX, 0.0, camZ);
+    view = glm::lookAt(cameraPos,
+                       cameraPos + cameraFront,
+                       cameraUp);
     auto rat = MyGlRenderContext::getInstance()->getWidth() * 1.0f / MyGlRenderContext::getInstance()->getHeight();
     projection = glm::perspective(glm::radians(45.0f), rat, 0.1f, 100.0f);
 
@@ -184,4 +187,39 @@ void ComplexCubeSample::draw() {
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
+}
+
+void ComplexCubeSample::changeDirection(int direction) {
+    LOGI("direction = %d", direction);
+    float cameraSpeed = 0.5f;
+    switch (direction) {
+        case Direction::Up:
+            cameraPos += cameraSpeed * cameraFront;
+            break;
+        case Direction::Down:
+            cameraPos -= cameraSpeed * cameraFront;
+            break;
+        case Direction::Left:
+            cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp) * cameraSpeed);
+            break;
+        case Direction::Right:
+            cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp) * cameraSpeed);
+            break;
+    }
+    LOGI("cameraPos.x = %f, cameraPos.y = %f, cameraPos.z = %f", cameraPos.x, cameraPos.y, cameraPos.z);
+    auto temp = cameraPos + cameraFront;
+    LOGI("cameraFront.x = %f, cameraFront.y = %f, cameraFront.z = %f", cameraFront.x, cameraFront.y, cameraFront.z);
+    LOGI("temp.x = %f, temp.y = %f, temp.z = %f", temp.x, temp.y, temp.z);
+}
+
+void ComplexCubeSample::setAngle(float yaw, float pitch) {
+    glm::vec3 front;
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(front);
+    LOGI("cameraFront.x = %f, cameraFront.y = %f, cameraFront.z = %f", cameraFront.x, cameraFront.y, cameraFront.z);
+    LOGI("cameraPos.x = %f, cameraPos.y = %f, cameraPos.z = %f", cameraPos.x, cameraPos.y, cameraPos.z);
+//    auto temp = cameraPos + cameraFront;
+//    LOGI("temp.x = %f, temp.y = %f, temp.z = %f", temp.x, temp.y, temp.z);
 }

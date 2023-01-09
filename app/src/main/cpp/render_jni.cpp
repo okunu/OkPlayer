@@ -60,3 +60,16 @@ Java_com_ou_demo_render_MyNativeRender_native_1onDrawFrame(JNIEnv *env, jobject 
     auto context = MyGlRenderContext::getInstance();
     context->onDrawFrame();
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ou_demo_render_MyNativeRender_changeDirection(JNIEnv *env, jobject thiz, jint direction) {
+    auto context = MyGlRenderContext::getInstance();
+    context->changeDirection(direction);
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ou_demo_render_MyNativeRender_setAngle(JNIEnv *env, jobject thiz, jfloat yaw,
+                                                jfloat pitch) {
+    auto context = MyGlRenderContext::getInstance();
+    context->setAngle(yaw, pitch);
+}

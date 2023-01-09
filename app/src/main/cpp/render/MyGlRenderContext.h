@@ -31,6 +31,8 @@ public:
     AAssetManager* getAsset();
     int getWidth() {return mWidth;}
     int getHeight() { return mHeight;}
+    void changeDirection(int direction);
+    void setAngle(float yaw, float pitch);
 
     static MyGlRenderContext* getInstance();
     static void releaseInstance();

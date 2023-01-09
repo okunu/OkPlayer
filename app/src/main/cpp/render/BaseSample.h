@@ -14,8 +14,10 @@ public:
     virtual ~BaseSample();
     virtual void init();
     virtual void draw();
+    virtual void changeDirection(int direction);
     virtual void prepareData();
     virtual void prepareTexture();
+    virtual void setAngle(float yaw, float pitch);
 
 protected:
     GLuint m_ProgramObj;

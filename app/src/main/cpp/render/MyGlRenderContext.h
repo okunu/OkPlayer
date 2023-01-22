@@ -32,7 +32,8 @@ public:
     int getWidth() {return mWidth;}
     int getHeight() { return mHeight;}
     void changeDirection(int direction);
-    void setAngle(float yaw, float pitch);
+    void rorate(float xoffset, float yoofset, float distance);
+    void scale(float d);
 
     static MyGlRenderContext* getInstance();
     static void releaseInstance();

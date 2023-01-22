@@ -17,7 +17,8 @@ public:
     virtual void changeDirection(int direction);
     virtual void prepareData();
     virtual void prepareTexture();
-    virtual void setAngle(float yaw, float pitch);
+    virtual void rorate(float xoffset, float yoofset, float distance);
+    virtual void scale(float d);
 
 protected:
     GLuint m_ProgramObj;

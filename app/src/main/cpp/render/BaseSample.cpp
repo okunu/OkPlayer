@@ -26,5 +26,8 @@ void BaseSample::prepareTexture() {}
 void BaseSample::changeDirection(int direction) {
 }
 
-void BaseSample::setAngle(float yaw, float pitch) {
+void BaseSample::rorate(float xoffset, float yoofset, float distance) {
+}
+
+void BaseSample::scale(float d) {
 }

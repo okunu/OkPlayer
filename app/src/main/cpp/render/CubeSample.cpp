@@ -9,8 +9,9 @@
 #include "glm-0.9.9.8/glm/gtx/transform.hpp"
 #include "glm-0.9.9.8/glm/gtc/type_ptr.hpp"
 
-CubeSample::CubeSample(): mVao(0), mFirstId(0), mSecId(0), degree(0.0f) {
-
+CubeSample::CubeSample(): mVao(0), mFirstId(0), mSecId(0), degree(0.0f),
+    xoffset(0.0f), yoffset(0.0f), distance(0.0f), fov(45.0f){
+    model = glm::mat4(1.0f);
 }
 
 CubeSample::~CubeSample() noexcept {}
@@ -156,16 +157,26 @@ void CubeSample::draw() {
     GLUtils::setUniformValue1i(m_ProgramObj, "firId", 0);
     GLUtils::setUniformValue1i(m_ProgramObj, "secId", 1);
 
-    glm::mat4 model         = glm::mat4(1.0f);
+//    glm::mat4 model         = glm::mat4(1.0f);
     glm::mat4 view          = glm::mat4(1.0f);
     glm::mat4 projection    = glm::mat4(1.0f);
 
     degree = degree + 1.0f;
 
-    model = glm::rotate(model, glm::radians(degree), glm::vec3(0.5f, 1.0f, 0.0f));
+//    model = glm::rotate(model, glm::radians(degree), glm::vec3(0.5f, 1.0f, 0.0f));
+
+    if (distance != 0) {
+        glm::vec3 cross = glm::cross(glm::vec3(0.0f, 0.0f, 1.0), glm::vec3(xoffset, yoffset, 0.0f));
+        glm::mat4 tmpMat = glm::mat4(1.0f);
+        model = glm::rotate(model, distance, cross);
+        tmpMat *= model;
+        model = tmpMat;
+    }
+
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
     auto rat = MyGlRenderContext::getInstance()->getWidth() * 1.0f / MyGlRenderContext::getInstance()->getHeight();
-    projection = glm::perspective(glm::radians(45.0f), rat, 0.1f, 100.0f);
+//    projection = glm::perspective(glm::radians(45.0f), rat, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(fov), rat, 0.1f, 100.0f);
 
     auto modelLoc = glGetUniformLocation(m_ProgramObj, "model");
     auto viewLoc = glGetUniformLocation(m_ProgramObj, "view");
@@ -183,4 +194,35 @@ void CubeSample::draw() {
 //        glDrawArrays(GL_TRIANGLES, 0, 36);
 //    }
     glDrawArrays(GL_TRIANGLES, 0, 36);
+    distance = 0.0f;
+}
+
+void CubeSample::rorate(float x, float y, float distance) {
+    distance = distance/80.0f;
+//    if (x > 0 && y > 0) {
+//        y = -y;
+//    } else if (x <= 0 && y > 0) {
+//        x = -x;
+//        distance = -distance;
+//    } else if (x > 0 && y < 0) {
+//        y = -y;
+//    } else if (x <= 0 && y < 0) {
+//        y = -y;
+//    }
+    this->xoffset = x;
+    this->yoffset = y;
+    this->distance = distance;
+}
+
+void CubeSample::scale(float scale) {
+    if (scale > 1) {
+        fov -= scale;
+    } else if(scale<1) {
+        fov +=  (1.0f/scale);
+    }
+    if (fov <= 20.0) {
+        fov = 20.0;
+    } else if (fov > 140.0) {
+        fov = 140.0;
+    }
 }

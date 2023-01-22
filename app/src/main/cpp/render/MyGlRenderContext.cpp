@@ -70,8 +70,12 @@ void MyGlRenderContext::changeDirection(int direction) {
     mSample->changeDirection(direction);
 }
 
-void MyGlRenderContext::setAngle(float yaw, float pitch) {
-    mSample->setAngle(yaw, pitch);
+void MyGlRenderContext::rorate(float xoffset, float yoofset, float distance) {
+    mSample->rorate(xoffset, yoofset, distance);
+}
+
+void MyGlRenderContext::scale(float d) {
+    mSample->scale(d);
 }
 
 void MyGlRenderContext::setAssetManager(AAssetManager *manager) {

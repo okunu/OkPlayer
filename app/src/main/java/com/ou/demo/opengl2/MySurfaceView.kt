@@ -29,36 +29,66 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
         glNativeRender?.changeDirection(direction)
     }
 
-    var lastX = getContext().resources.displayMetrics.widthPixels/2f
-    var lastY = getContext().resources.displayMetrics.heightPixels /2f
-    var yaw = 0f
-    var pitch = 0f
+    var lastX = 0f
+    var lastY = 0f
+    var last2x = 0f
+    var last2y = 0f
+    var canRotate = true
+    var canScale = false
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        when(event.action) {
+        when(event.actionMasked) {
             MotionEvent.ACTION_DOWN ->{
                 lastX = event.x
                 lastY = event.y
+                canRotate = true
+                canScale = false
+            }
+            MotionEvent.ACTION_POINTER_DOWN ->{
+                canRotate = false
+                canScale = true
+                if (event.pointerCount > 2) {
+                    canScale = false
+                    return false
+                }
+                var index0 = event.getPointerId(0)
+                var index1 = event.getPointerId(1)
+                lastX = event.getX(index0)
+                lastY = event.getY(index0)
+                last2x = event.getX(index1)
+                last2y = event.getY(index1)
+                glNativeRender?.rorate(0f, 0f, 0f)
+            }
+            MotionEvent.ACTION_POINTER_UP ->{
+                canRotate = false
+                canScale = false
+                glNativeRender?.rorate(0f, 0f, 0f)
             }
             MotionEvent.ACTION_MOVE ->{
-                var curX = event.x
-                var curY = event.y
-                var xoffset = curX - lastX
-                var yoffset = curY - lastY
-                lastX = curX
-                lastY = curY
-
-                var sensitivity = 0.15f
-                xoffset *= sensitivity
-                yoffset *= sensitivity
-
-                yaw += xoffset
-                pitch += yoffset
-                if(pitch > 89.0f)
-                    pitch = 89.0f
-                if(pitch < -89.0f)
-                    pitch = -89.0f
-                glNativeRender?.setAngle(yaw, pitch)
-                Util.log("move yaw = $yaw  pitch = $pitch xoffset = $xoffset yoofset = $yoffset")
+                if (canRotate) {
+                    if (event.pointerCount > 2) {
+                        glNativeRender?.rorate(0f, 0f, 0f)
+                        return true
+                    }
+                    var curX = event.x
+                    var curY = event.y
+                    var xoffset = curX - lastX
+                    var yoffset = curY - lastY
+                    lastX = curX
+                    lastY = curY
+                    var distance = Math.sqrt((xoffset * xoffset).toDouble() + (yoffset * yoffset).toDouble())
+                    glNativeRender?.rorate(xoffset, yoffset, distance.toFloat())
+                } else if (canScale) {
+                    val index0 = event.getPointerId(0)
+                    val index1 = event.getPointerId(1)
+                    val curX = event.getX(index0)
+                    val curY = event.getY(index0)
+                    val cur1X = event.getX(index1)
+                    val cur1Y = event.getY(index1)
+                    val lastDis=Math.sqrt(Math.pow((lastX-last2x).toDouble(), 2.0)+Math.pow((lastY-last2y).toDouble(), 2.0))
+                    val curDis=Math.sqrt(Math.pow((curX-cur1X).toDouble(), 2.0)+Math.pow((curY-cur1Y).toDouble(), 2.0))
+                    glNativeRender?.scale((curDis/lastDis).toFloat())
+                }
             }
         }
         return true
@@ -72,7 +102,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
 
         override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
             Util.log("onSurfaceCreate---- thread = ${Thread.currentThread().name}")
-            nativeRender.native_init(Common.RenderType.ComplexCube.ordinal)
+            nativeRender.native_init(Common.RenderType.Cube.ordinal)
             nativeRender.native_onSurfaceCreate(holder.surface)
         }
 

@@ -10,5 +10,6 @@ class MyNativeRender {
     external fun native_onSurfaceChanged(width: Int, heiht: Int)
     external fun native_onDrawFrame()
     external fun changeDirection(direction: Int)
-    external fun setAngle(yaw: Float, pitch: Float)
+    external fun rorate(offsetX: Float, offsetY: Float, distance: Float)
+    external fun scale(d: Float)
 }

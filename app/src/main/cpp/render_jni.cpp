@@ -68,8 +68,14 @@ Java_com_ou_demo_render_MyNativeRender_changeDirection(JNIEnv *env, jobject thiz
 }
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_ou_demo_render_MyNativeRender_setAngle(JNIEnv *env, jobject thiz, jfloat yaw,
-                                                jfloat pitch) {
+Java_com_ou_demo_render_MyNativeRender_rorate(JNIEnv *env, jobject thiz, jfloat offset_x,
+                                              jfloat offset_y, jfloat distance) {
     auto context = MyGlRenderContext::getInstance();
-    context->setAngle(yaw, pitch);
+    context->rorate(offset_x, offset_y, distance);
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ou_demo_render_MyNativeRender_scale(JNIEnv *env, jobject thiz, jfloat d) {
+    auto context = MyGlRenderContext::getInstance();
+    context->scale(d);
 }

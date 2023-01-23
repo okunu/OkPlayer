@@ -20,7 +20,6 @@ public:
     void prepareData() override;
     void prepareTexture() override;
     void changeDirection(int direction) override;
-    void setAngle(float yaw, float pitch) override;
 
 private:
     GLuint mVao;

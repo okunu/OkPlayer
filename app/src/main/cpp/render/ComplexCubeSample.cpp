@@ -211,15 +211,3 @@ void ComplexCubeSample::changeDirection(int direction) {
     LOGI("cameraFront.x = %f, cameraFront.y = %f, cameraFront.z = %f", cameraFront.x, cameraFront.y, cameraFront.z);
     LOGI("temp.x = %f, temp.y = %f, temp.z = %f", temp.x, temp.y, temp.z);
 }
-
-void ComplexCubeSample::setAngle(float yaw, float pitch) {
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(front);
-    LOGI("cameraFront.x = %f, cameraFront.y = %f, cameraFront.z = %f", cameraFront.x, cameraFront.y, cameraFront.z);
-    LOGI("cameraPos.x = %f, cameraPos.y = %f, cameraPos.z = %f", cameraPos.x, cameraPos.y, cameraPos.z);
-//    auto temp = cameraPos + cameraFront;
-//    LOGI("temp.x = %f, temp.y = %f, temp.z = %f", temp.x, temp.y, temp.z);
-}

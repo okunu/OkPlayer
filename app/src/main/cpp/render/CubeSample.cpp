@@ -199,16 +199,16 @@ void CubeSample::draw() {
 
 void CubeSample::rorate(float x, float y, float distance) {
     distance = distance/80.0f;
-//    if (x > 0 && y > 0) {
-//        y = -y;
-//    } else if (x <= 0 && y > 0) {
-//        x = -x;
-//        distance = -distance;
-//    } else if (x > 0 && y < 0) {
-//        y = -y;
-//    } else if (x <= 0 && y < 0) {
-//        y = -y;
-//    }
+    if (x > 0 && y > 0) {
+        y = -y;
+    } else if (x <= 0 && y > 0) {
+        x = -x;
+        distance = -distance;
+    } else if (x > 0 && y < 0) {
+        y = -y;
+    } else if (x <= 0 && y < 0) {
+        y = -y;
+    }
     this->xoffset = x;
     this->yoffset = y;
     this->distance = distance;

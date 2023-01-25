@@ -14,6 +14,7 @@
 #include "TransformSample.h"
 #include "CubeSample.h"
 #include "ComplexCubeSample.h"
+#include "SimpleLightSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -102,6 +103,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new CubeSample();
     } else if (type == RenderType::ComplexCube) {
         mSample = new ComplexCubeSample();
+    } else if (type == RenderType::SimpleLight) {
+        mSample = new SimpleLightSample();
     }
 }
 

@@ -18,6 +18,7 @@ object Common {
         TwoTexture,
         Transform,
         Cube,
-        ComplexCube
+        ComplexCube,
+        SimpleLight,
     }
 }

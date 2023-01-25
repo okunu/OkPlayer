@@ -157,13 +157,13 @@ void CubeSample::draw() {
     GLUtils::setUniformValue1i(m_ProgramObj, "firId", 0);
     GLUtils::setUniformValue1i(m_ProgramObj, "secId", 1);
 
-//    glm::mat4 model         = glm::mat4(1.0f);
+    glm::mat4 model         = glm::mat4(1.0f);
     glm::mat4 view          = glm::mat4(1.0f);
     glm::mat4 projection    = glm::mat4(1.0f);
 
     degree = degree + 1.0f;
 
-//    model = glm::rotate(model, glm::radians(degree), glm::vec3(0.5f, 1.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(degree), glm::vec3(0.5f, 1.0f, 0.0f));
 
     if (distance != 0) {
         glm::vec3 cross = glm::cross(glm::vec3(0.0f, 0.0f, 1.0), glm::vec3(xoffset, yoffset, 0.0f));

@@ -8,7 +8,8 @@
 #define Triangle_Type 1
 #define Texture_Type 2
 
-enum RenderType {Triangle, Texture, Vao, Yuv, Uniform, TwoTexture, Transform, Cube, ComplexCube};
+enum RenderType {Triangle, Texture, Vao, Yuv, Uniform, TwoTexture, Transform, Cube, ComplexCube,
+    SimpleLight,};
 
 enum Direction {Up, Down, Left, Right};
 

@@ -15,7 +15,7 @@ class OpenGl2Activity: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityOpengl2Binding.inflate(layoutInflater)
         setContentView(binding.root)
-        setDirectionVisible(true)
+        setDirectionVisible(false)
     }
 
     override fun onPause() {

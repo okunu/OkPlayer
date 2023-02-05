@@ -17,15 +17,19 @@ SimpleLightSample::~SimpleLightSample() noexcept {}
 
 void SimpleLightSample::init() {
     LOGI("simple light init");
-    auto vert = MyGlRenderContext::getInstance()->getAssetResource("simpleLight/object.vert");
-    auto frag = MyGlRenderContext::getInstance()->getAssetResource("simpleLight/object.frag");
-    m_ProgramObj = GLUtils::createProgram(vert.data(), frag.data(),
-                                          m_VertexShader, m_FragmentShader);
+//    auto vert = MyGlRenderContext::getInstance()->getAssetResource("simpleLight/object.vert");
+//    auto frag = MyGlRenderContext::getInstance()->getAssetResource("simpleLight/object.frag");
+//    m_ProgramObj = GLUtils::createProgram(vert.data(), frag.data(),
+//                                          m_VertexShader, m_FragmentShader);
+//
+//    auto secVert = MyGlRenderContext::getInstance()->getAssetResource("simpleLight/light.vert");
+//    auto secFrag = MyGlRenderContext::getInstance()->getAssetResource("simpleLight/light.frag");
+//    secProgramObj_ = GLUtils::createProgram(secVert.data(), secFrag.data(),
+//                                          secVertexShader_, secFragmentShader_);
 
-    auto secVert = MyGlRenderContext::getInstance()->getAssetResource("simpleLight/light.vert");
-    auto secFrag = MyGlRenderContext::getInstance()->getAssetResource("simpleLight/light.frag");
-    secProgramObj_ = GLUtils::createProgram(secVert.data(), secFrag.data(),
-                                          secVertexShader_, secFragmentShader_);
+    objectShader = Shader("simpleLight/object.vert", "simpleLight/object.frag");
+    lightShader = Shader("simpleLight/light.vert", "simpleLight/light.frag");
+    camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
     prepareData();
 }
 
@@ -103,13 +107,13 @@ void SimpleLightSample::draw() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram(m_ProgramObj);
-    glBindVertexArray(vao_);
+    objectShader.use();
+    objectShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+    objectShader.setVec3("lightColor",  1.0f, 1.0f, 1.0f);
 
     glm::mat4 model         = glm::mat4(1.0f);
     glm::mat4 view          = glm::mat4(1.0f);
     glm::mat4 projection    = glm::mat4(1.0f);
-
     model = glm::rotate(model, glm::radians(20.0f), glm::vec3(0.5f, 1.0f, 0.0f));
     view = glm::lookAt(cameraPos,
                        cameraPos + cameraFront,
@@ -117,31 +121,67 @@ void SimpleLightSample::draw() {
     auto rat = MyGlRenderContext::getInstance()->getWidth() * 1.0f / MyGlRenderContext::getInstance()->getHeight();
     projection = glm::perspective(glm::radians(45.0f), rat, 0.1f, 100.0f);
 
-    auto modelLoc = glGetUniformLocation(m_ProgramObj, "model");
-    auto viewLoc = glGetUniformLocation(m_ProgramObj, "view");
-    auto projectionLoc = glGetUniformLocation(m_ProgramObj, "projection");
-    auto objectColorLoc = glGetUniformLocation(m_ProgramObj, "objectColor");
-    auto lightColorLoc = glGetUniformLocation(m_ProgramObj, "lightColor");
+//    auto rat = MyGlRenderContext::getInstance()->getWidth() * 1.0f / MyGlRenderContext::getInstance()->getHeight();
+//    glm::mat4 projection = glm::perspective(glm::radians(45.0f), rat, 0.1f, 100.0f);
+//    glm::mat4 view = camera.getViewMatrix();
+//    glm::mat4 model = glm::mat4(1.0f);
+    objectShader.setMat4("projection", projection);
+    objectShader.setMat4("view", view);
+    objectShader.setMat4("model", model);
 
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-    glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
-    glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
-
+    glBindVertexArray(vao_);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    glUseProgram(secProgramObj_);
-    auto modelLoc2 = glGetUniformLocation(secProgramObj_, "model");
-    auto viewLoc2 = glGetUniformLocation(secProgramObj_, "view");
-    auto projectionLoc2 = glGetUniformLocation(secProgramObj_, "projection");
-    glBindVertexArray(secVao_);
-    glUniformMatrix4fv(viewLoc2, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projectionLoc2, 1, GL_FALSE, glm::value_ptr(projection));
+    lightShader.use();
+    lightShader.setMat4("projection", projection);
+    lightShader.setMat4("view", view);
     model = glm::mat4(1.0f);
     glm::vec3 lightPos(0.7f, 0.8f, 2.0f);
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f));
-    glUniformMatrix4fv(modelLoc2, 1, GL_FALSE, glm::value_ptr(model));
+    lightShader.setMat4("model", model);
+    glBindVertexArray(secVao_);
     glDrawArrays(GL_TRIANGLES, 0, 36);
+
+//    glUseProgram(m_ProgramObj);
+//    glBindVertexArray(vao_);
+//
+//    glm::mat4 model         = glm::mat4(1.0f);
+//    glm::mat4 view          = glm::mat4(1.0f);
+//    glm::mat4 projection    = glm::mat4(1.0f);
+//
+//    model = glm::rotate(model, glm::radians(20.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+//    view = glm::lookAt(cameraPos,
+//                       cameraPos + cameraFront,
+//                       cameraUp);
+//    auto rat = MyGlRenderContext::getInstance()->getWidth() * 1.0f / MyGlRenderContext::getInstance()->getHeight();
+//    projection = glm::perspective(glm::radians(45.0f), rat, 0.1f, 100.0f);
+//
+//    auto modelLoc = glGetUniformLocation(m_ProgramObj, "model");
+//    auto viewLoc = glGetUniformLocation(m_ProgramObj, "view");
+//    auto projectionLoc = glGetUniformLocation(m_ProgramObj, "projection");
+//    auto objectColorLoc = glGetUniformLocation(m_ProgramObj, "objectColor");
+//    auto lightColorLoc = glGetUniformLocation(m_ProgramObj, "lightColor");
+//
+//    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+//    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+//    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+//    glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
+//    glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
+//
+//    glDrawArrays(GL_TRIANGLES, 0, 36);
+//
+//    glUseProgram(secProgramObj_);
+//    auto modelLoc2 = glGetUniformLocation(secProgramObj_, "model");
+//    auto viewLoc2 = glGetUniformLocation(secProgramObj_, "view");
+//    auto projectionLoc2 = glGetUniformLocation(secProgramObj_, "projection");
+//    glBindVertexArray(secVao_);
+//    glUniformMatrix4fv(viewLoc2, 1, GL_FALSE, glm::value_ptr(view));
+//    glUniformMatrix4fv(projectionLoc2, 1, GL_FALSE, glm::value_ptr(projection));
+//    model = glm::mat4(1.0f);
+//    glm::vec3 lightPos(0.7f, 0.8f, 2.0f);
+//    model = glm::translate(model, lightPos);
+//    model = glm::scale(model, glm::vec3(0.2f));
+//    glUniformMatrix4fv(modelLoc2, 1, GL_FALSE, glm::value_ptr(model));
+//    glDrawArrays(GL_TRIANGLES, 0, 36);
 }

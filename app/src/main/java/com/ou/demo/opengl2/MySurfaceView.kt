@@ -3,6 +3,7 @@ package com.ou.demo.opengl2
 import android.content.Context
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import com.ou.demo.render.MyNativeRender
 import com.ou.demo.util.Common
@@ -12,7 +13,9 @@ import javax.microedition.khronos.opengles.GL10
 
 class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView(context, attributeSet) {
 
+    val TAG = "MySurfaceView"
     var glRender: MyGlRender? = null
+
     var glNativeRender: MyNativeRender? = null
 
     init {
@@ -43,6 +46,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
                 lastY = event.y
                 canRotate = true
                 canScale = false
+                Log.i(TAG, "onTouchEvent: down x = $lastX y = $lastY")
             }
             MotionEvent.ACTION_POINTER_DOWN ->{
                 canRotate = false
@@ -57,12 +61,14 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
                 lastY = event.getY(index0)
                 last2x = event.getX(index1)
                 last2y = event.getY(index1)
+                Log.i(TAG, "onTouchEvent: down x = $lastX y = $lastY")
                 glNativeRender?.rorate(0f, 0f, 0f)
             }
             MotionEvent.ACTION_POINTER_UP ->{
                 canRotate = false
                 canScale = false
                 glNativeRender?.rorate(0f, 0f, 0f)
+                Log.i(TAG, "onTouchEvent: ACTION_POINTER_UP")
             }
             MotionEvent.ACTION_MOVE ->{
                 if (canRotate) {
@@ -102,7 +108,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
 
         override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
             Util.log("onSurfaceCreate---- thread = ${Thread.currentThread().name}")
-            nativeRender.native_init(Common.RenderType.SimpleLight.ordinal)
+            nativeRender.native_init(Common.RenderType.Rorate.ordinal)
             nativeRender.native_onSurfaceCreate(holder.surface)
         }
 

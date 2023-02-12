@@ -37,6 +37,23 @@ public:
         return glm::lookAt(position, position + front, up);
     }
 
+    void handleTouchEvent(float xoffset, float yoffset) {
+        float sensitivity = 0.1f; // change this value to your liking
+        xoffset *= sensitivity;
+        yoffset *= sensitivity;
+
+        yaw += xoffset;
+        pitch += yoffset;
+
+        // make sure that when pitch is out of bounds, screen doesn't get flipped
+        if (pitch > 89.0f)
+            pitch = 89.0f;
+        if (pitch < -89.0f)
+            pitch = -89.0f;
+
+        updateCameraVectors();
+    }
+
 public:
     glm::vec3 position;
     glm::vec3 front;

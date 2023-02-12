@@ -20,5 +20,6 @@ object Common {
         Cube,
         ComplexCube,
         SimpleLight,
+        Rorate,
     }
 }

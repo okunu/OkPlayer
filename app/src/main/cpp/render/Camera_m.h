@@ -57,6 +57,9 @@ private:
         // also re-calculate the Right and Up vector
         right = glm::normalize(glm::cross(front, worldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
         up    = glm::normalize(glm::cross(right, front));
+        LOGI("up.x = %f, up.y = %f, up.z = %f", up.x, up.y, up.z);
+        LOGI("position.x = %f, position.y = %f, position.z = %f", position.x, position.y, position.z);
+        LOGI("front.x = %f, front.y = %f, front.z = %f", front.x, front.y, front.z);
     }
 };
 

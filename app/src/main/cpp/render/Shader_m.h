@@ -23,7 +23,7 @@ public:
         unsigned int vertex, fragment;
         auto realVertextCode = vertexCode.data();
         auto realFrgmentCode = fragmentCode.data();
-        LOGI("realVertextCode = %s, realFrgmentCode = %s", realVertextCode, realFrgmentCode);
+        //LOGI("realVertextCode = %s, realFrgmentCode = %s", realVertextCode, realFrgmentCode);
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &realVertextCode, nullptr);
         glCompileShader(vertex);

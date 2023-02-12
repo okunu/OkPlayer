@@ -29,7 +29,8 @@ void SimpleLightSample::init() {
 
     objectShader = Shader("simpleLight/object.vert", "simpleLight/object.frag");
     lightShader = Shader("simpleLight/light.vert", "simpleLight/light.frag");
-    camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    camera = Camera(glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+                    -90.0f, 0.0f);
     prepareData();
 }
 
@@ -111,20 +112,22 @@ void SimpleLightSample::draw() {
     objectShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
     objectShader.setVec3("lightColor",  1.0f, 1.0f, 1.0f);
 
-    glm::mat4 model         = glm::mat4(1.0f);
-    glm::mat4 view          = glm::mat4(1.0f);
-    glm::mat4 projection    = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(20.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-    view = glm::lookAt(cameraPos,
-                       cameraPos + cameraFront,
-                       cameraUp);
-    auto rat = MyGlRenderContext::getInstance()->getWidth() * 1.0f / MyGlRenderContext::getInstance()->getHeight();
-    projection = glm::perspective(glm::radians(45.0f), rat, 0.1f, 100.0f);
-
+//    glm::mat4 model         = glm::mat4(1.0f);
+//    glm::mat4 view          = glm::mat4(1.0f);
+//    glm::mat4 projection    = glm::mat4(1.0f);
+//    model = glm::rotate(model, glm::radians(20.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+//    view = glm::lookAt(cameraPos,
+//                       cameraPos + cameraFront,
+//                       cameraUp);
 //    auto rat = MyGlRenderContext::getInstance()->getWidth() * 1.0f / MyGlRenderContext::getInstance()->getHeight();
-//    glm::mat4 projection = glm::perspective(glm::radians(45.0f), rat, 0.1f, 100.0f);
-//    glm::mat4 view = camera.getViewMatrix();
-//    glm::mat4 model = glm::mat4(1.0f);
+//    projection = glm::perspective(glm::radians(45.0f), rat, 0.1f, 100.0f);
+
+    auto rat = MyGlRenderContext::getInstance()->getWidth() * 1.0f /
+               MyGlRenderContext::getInstance()->getHeight();
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), rat, 0.1f, 100.0f);
+    glm::mat4 view = camera.getViewMatrix();
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, glm::radians(20.0f), glm::vec3(0.5f, 1.0f, 0.0f));
     objectShader.setMat4("projection", projection);
     objectShader.setMat4("view", view);
     objectShader.setMat4("model", model);

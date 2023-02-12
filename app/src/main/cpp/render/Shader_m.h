@@ -19,16 +19,18 @@ public:
     Shader(const char* vertexPath, const char* fragmentPath){
         auto vertexCode = MyGlRenderContext::getInstance()->getAssetResource(vertexPath);
         LOGI("path = %s", vertexPath);
-        auto fragmentCode = MyGlRenderContext::getInstance()->getAssetResource(fragmentPath).c_str();
+        auto fragmentCode = MyGlRenderContext::getInstance()->getAssetResource(fragmentPath);
         unsigned int vertex, fragment;
         auto realVertextCode = vertexCode.data();
+        auto realFrgmentCode = fragmentCode.data();
+        LOGI("realVertextCode = %s, realFrgmentCode = %s", realVertextCode, realFrgmentCode);
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &realVertextCode, nullptr);
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEXT");
 
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment, 1, &fragmentCode, nullptr);
+        glShaderSource(fragment, 1, &realFrgmentCode, nullptr);
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
 

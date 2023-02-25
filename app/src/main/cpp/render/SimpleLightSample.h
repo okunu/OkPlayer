@@ -23,14 +23,8 @@ public:
     void prepareData() override;
 
 private:
-    GLuint secProgramObj_;
-    GLuint secVertexShader_;
-    GLuint secFragmentShader_;
     GLuint vao_;
     GLuint secVao_;
-    glm::vec3 cameraPos;
-    glm::vec3 cameraFront;
-    glm::vec3 cameraUp;
 
     //光源shader
     Shader lightShader;

@@ -22,5 +22,6 @@ object Common {
         SimpleLight,
         Rorate,
         Material,
+        Light,
     }
 }

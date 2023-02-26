@@ -16,6 +16,7 @@
 #include "ComplexCubeSample.h"
 #include "SimpleLightSample.h"
 #include "RorateSample.h"
+#include "MaterialSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -108,6 +109,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new SimpleLightSample();
     } else if (type == RenderType::Rorate) {
         mSample = new RorateSample();
+    } else if (type == RenderType::Material) {
+        mSample = new MaterialSample();
     }
 }
 

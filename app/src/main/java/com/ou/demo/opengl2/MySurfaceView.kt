@@ -108,7 +108,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
 
         override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
             Util.log("onSurfaceCreate---- thread = ${Thread.currentThread().name}")
-            nativeRender.native_init(Common.RenderType.Material.ordinal)
+            nativeRender.native_init(Common.RenderType.Rorate.ordinal)
             nativeRender.native_onSurfaceCreate(holder.surface)
         }
 

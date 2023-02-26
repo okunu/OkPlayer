@@ -152,6 +152,10 @@ void RorateSample::rorate(float xoffset, float yoofset, float distance) {
     camera.handleTouchEvent(xoffset, yoofset);
 }
 
+void RorateSample::changeDirection(int direction) {
+    camera.changeDirection(direction);
+}
+
 void RorateSample::scale(float d) {
 
 }

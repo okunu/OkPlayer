@@ -5,6 +5,8 @@
 #ifndef DEMO_CAMERA_M_H
 #define DEMO_CAMERA_M_H
 
+#include "CommonData.h"
+
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
 const float SPEED = 2.5f;
@@ -52,6 +54,29 @@ public:
             pitch = -89.0f;
 
         updateCameraVectors();
+    }
+
+    void changeDirection(int direction) {
+        LOGI("direction = %d", direction);
+        float cameraSpeed = 0.5f;
+        switch (direction) {
+            case Direction::Up:
+                position += cameraSpeed * front;
+                break;
+            case Direction::Down:
+                position -= cameraSpeed * front;
+                break;
+            case Direction::Left:
+                position -= glm::normalize(glm::cross(front, up) * cameraSpeed);
+                break;
+            case Direction::Right:
+                position += glm::normalize(glm::cross(front, up) * cameraSpeed);
+                break;
+        }
+        LOGI("cameraPos.x = %f, cameraPos.y = %f, cameraPos.z = %f", position.x, position.y, position.z);
+        auto temp = position + front;
+        LOGI("cameraFront.x = %f, cameraFront.y = %f, cameraFront.z = %f", front.x, front.y, front.z);
+        LOGI("temp.x = %f, temp.y = %f, temp.z = %f", temp.x, temp.y, temp.z);
     }
 
 public:

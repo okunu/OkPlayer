@@ -25,6 +25,7 @@ public:
     void prepareTexture() override;
     void rorate(float xoffset, float yoofset, float distance) override;
     void scale(float d) override;
+    void changeDirection(int direction) override;
 
 private:
     Shader shader;

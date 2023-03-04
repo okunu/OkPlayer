@@ -14,8 +14,8 @@ LightSample::~LightSample() noexcept {}
 
 void LightSample::init() {
     LOGI("simple light init");
-    objectShader = Shader("materials/object.vert", "materials/object.frag");
-    lightShader = Shader("materials/light.vert", "materials/light.frag");
+    objectShader = Shader("lightSample/object.vert", "lightSample/object.frag");
+    lightShader = Shader("lightSample/light.vert", "lightSample/light.frag");
     camera = Camera(glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                     -90.0f, 0.0f);
     prepareData();

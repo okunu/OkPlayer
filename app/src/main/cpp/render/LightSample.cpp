@@ -6,7 +6,7 @@
 #include "LightSample.h"
 #include "MyGlRenderContext.h"
 
-LightSample::LightSample(): vao_(0), secVao_(0), textureId(0){
+LightSample::LightSample(): vao_(0), secVao_(0), textureId(0), secId(0){
 }
 
 LightSample::~LightSample() noexcept {}
@@ -44,6 +44,29 @@ void LightSample::prepareTexture() {
     glActiveTexture(GL_TEXTURE0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lyfWidth, lyfHeiht,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, lyfPixel);
+    glBindTexture(GL_TEXTURE_2D, GL_NONE);
+
+    glGenTextures(1, &secId);
+    glBindTexture(GL_TEXTURE_2D, secId);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+// set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    void* secPixel = nullptr;
+    int secWidth, secHeiht;
+    MyGlRenderContext::getInstance()->getBitmap("res/beauty.png", &secPixel, secWidth, secHeiht);
+    LOGI("LightSample secWidth = %d, secHeiht = %d", secWidth, secHeiht);
+    if (secPixel == nullptr) {
+        LOGI("pixel is nullptr");
+    } else {
+        LOGI("pixel is not nullptr");
+    }
+    glActiveTexture(GL_TEXTURE1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, secWidth, secHeiht,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, secPixel);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 }
 
@@ -135,7 +158,7 @@ void LightSample::draw() {
     objectShader.use();
 
     objectShader.setInt("material.diffuse", 0);
-    objectShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+    objectShader.setInt("material.specular", 1);
     objectShader.setFloat("material.shininess", 32.0f);
 
     objectShader.setVec3("light.ambient",  0.2f, 0.2f, 0.2f);
@@ -158,6 +181,10 @@ void LightSample::draw() {
     glBindVertexArray(vao_);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, secId);
+
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     lightShader.use();

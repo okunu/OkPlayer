@@ -26,6 +26,7 @@ private:
     GLuint vao_;
     GLuint secVao_;
     GLuint textureId;
+    GLuint secId;
 
     //光源shader
     Shader lightShader;

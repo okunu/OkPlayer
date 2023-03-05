@@ -18,6 +18,7 @@
 #include "RorateSample.h"
 #include "MaterialSample.h"
 #include "LightSample.h"
+#include "ParallelLightSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -114,6 +115,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new MaterialSample();
     } else if (type == RenderType::Light) {
         mSample = new LightSample();
+    } else if (type == RenderType::ParallelLight) {
+        mSample = new ParallelLightSample();
     }
 }
 

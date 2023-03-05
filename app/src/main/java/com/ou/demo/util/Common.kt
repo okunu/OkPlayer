@@ -23,5 +23,6 @@ object Common {
         Rorate,
         Material,
         Light,
+        ParallelLight,
     }
 }

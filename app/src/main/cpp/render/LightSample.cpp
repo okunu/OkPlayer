@@ -23,6 +23,17 @@ void LightSample::init() {
 }
 
 void LightSample::prepareTexture() {
+    void* lyfPixel = nullptr;
+    int lyfWidth, lyfHeiht;
+    MyGlRenderContext::getInstance()->getBitmap("res/container.png", &lyfPixel, lyfWidth, lyfHeiht);
+    LOGI("LightSample lyfWidth = %d, lyfHeiht = %d", lyfWidth, lyfHeiht);
+
+    void* secPixel = nullptr;
+    int secWidth, secHeiht;
+    MyGlRenderContext::getInstance()->getBitmap("res/container2.png", &secPixel, secWidth, secHeiht);
+    LOGI("LightSample secWidth = %d, secHeiht = %d", secWidth, secHeiht);
+
+    glActiveTexture(GL_TEXTURE0);
     glGenTextures(1, &textureId);
     glBindTexture(GL_TEXTURE_2D, textureId);
 
@@ -31,21 +42,12 @@ void LightSample::prepareTexture() {
 // set texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    void* lyfPixel = nullptr;
-    int lyfWidth, lyfHeiht;
-    MyGlRenderContext::getInstance()->getBitmap("res/container.png", &lyfPixel, lyfWidth, lyfHeiht);
-    LOGI("LightSample lyfWidth = %d, lyfHeiht = %d", lyfWidth, lyfHeiht);
-    if (lyfPixel == nullptr) {
-        LOGI("pixel is nullptr");
-    } else {
-        LOGI("pixel is not nullptr");
-    }
-    glActiveTexture(GL_TEXTURE0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lyfWidth, lyfHeiht,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, lyfPixel);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
+
+    glActiveTexture(GL_TEXTURE1);
     glGenTextures(1, &secId);
     glBindTexture(GL_TEXTURE_2D, secId);
 
@@ -54,17 +56,6 @@ void LightSample::prepareTexture() {
 // set texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    void* secPixel = nullptr;
-    int secWidth, secHeiht;
-    MyGlRenderContext::getInstance()->getBitmap("res/beauty.png", &secPixel, secWidth, secHeiht);
-    LOGI("LightSample secWidth = %d, secHeiht = %d", secWidth, secHeiht);
-    if (secPixel == nullptr) {
-        LOGI("pixel is nullptr");
-    } else {
-        LOGI("pixel is not nullptr");
-    }
-    glActiveTexture(GL_TEXTURE1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, secWidth, secHeiht,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, secPixel);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);

@@ -166,7 +166,10 @@ void ParallelLightSample::draw() {
     objectShader.setVec3("light.diffuse",  0.5f, 0.5f, 0.5f); // 将光照调暗了一些以搭配场景
     objectShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 //    objectShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
-    objectShader.setVec3("light.position", lightPos);
+//    objectShader.setVec3("light.position", lightPos);
+    objectShader.setVec3("light.position", camera.position);
+    objectShader.setVec3("light.direction", camera.front);
+    objectShader.setFloat("light.cutOff",   glm::cos(glm::radians(85.5f)));
 
     objectShader.setFloat("light.constant",  1.0f);
     objectShader.setFloat("light.linear",    0.09f);

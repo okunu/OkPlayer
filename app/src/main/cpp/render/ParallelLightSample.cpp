@@ -169,7 +169,7 @@ void ParallelLightSample::draw() {
 //    objectShader.setVec3("light.position", lightPos);
     objectShader.setVec3("light.position", camera.position);
     objectShader.setVec3("light.direction", camera.front);
-    objectShader.setFloat("light.cutOff",   glm::cos(glm::radians(85.5f)));
+    objectShader.setFloat("light.cutOff",   glm::cos(glm::radians(5.5f)));
 
     objectShader.setFloat("light.constant",  1.0f);
     objectShader.setFloat("light.linear",    0.09f);
@@ -191,9 +191,9 @@ void ParallelLightSample::draw() {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, secId);
 
-    for (int i = 1; i <= 10; ++i) {
+    for (int i = 0; i < 10; ++i) {
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, cubePositions[i-1]);
+        model = glm::translate(model, cubePositions[i]);
         float angle = 20.0f * i;
         model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
         objectShader.setMat4("model", model);

@@ -9,7 +9,7 @@
 #include <android/native_window_jni.h>
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
-#include "TriangleSample.h"
+#include "base/TriangleSample.h"
 #include <android/asset_manager.h>
 
 class MyGlRenderContext {

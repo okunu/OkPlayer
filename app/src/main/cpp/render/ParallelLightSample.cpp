@@ -170,6 +170,7 @@ void ParallelLightSample::draw() {
     objectShader.setVec3("light.position", camera.position);
     objectShader.setVec3("light.direction", camera.front);
     objectShader.setFloat("light.cutOff",   glm::cos(glm::radians(5.5f)));
+    objectShader.setFloat("light.outCutOff",   glm::cos(glm::radians(9.5f)));
 
     objectShader.setFloat("light.constant",  1.0f);
     objectShader.setFloat("light.linear",    0.09f);

@@ -24,5 +24,6 @@ object Common {
         Material,
         Light,
         ParallelLight,
+        MoreLight,
     }
 }

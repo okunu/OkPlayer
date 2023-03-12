@@ -19,6 +19,7 @@
 #include "light/MaterialSample.h"
 #include "light/LightSample.h"
 #include "light/ParallelLightSample.h"
+#include "light/MoreLightSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -117,6 +118,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new LightSample();
     } else if (type == RenderType::ParallelLight) {
         mSample = new ParallelLightSample();
+    } else if (type == RenderType::MoreLight) {
+        mSample = new MoreLightSample();
     }
 }
 

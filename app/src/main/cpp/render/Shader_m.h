@@ -7,6 +7,9 @@
 
 #include "MyGlRenderContext.h"
 #include <string>
+#include "glm-0.9.9.8/glm/glm.hpp"
+#include "glm-0.9.9.8/glm/gtx/transform.hpp"
+#include "glm-0.9.9.8/glm/gtc/type_ptr.hpp"
 
 const static std::string PROGRAM = "PROGRAM";
 

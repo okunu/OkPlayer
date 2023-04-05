@@ -17,6 +17,7 @@ file(GLOB src-files
         ${CMAKE_SOURCE_DIR}/render/*.cpp
         ${CMAKE_SOURCE_DIR}/render/light/*.cpp
         ${CMAKE_SOURCE_DIR}/render/base/*.cpp
+        ${CMAKE_SOURCE_DIR}/render/model/*.cpp
         ${CMAKE_SOURCE_DIR}/jniHelper/*.cpp)
 
 # 添加本地so库 native-lib：这个是声明引用so库的名称 SHARED：表示共享so库文件
@@ -82,6 +83,20 @@ add_library( swscale
 set_target_properties( swscale
         PROPERTIES IMPORTED_LOCATION
         ${SO_DIR}/libswscale.so)
+
+add_library(assimp
+        SHARED
+        IMPORTED)
+set_target_properties(assimp
+        PROPERTIES IMPORTED_LOCATION
+        ${SO_DIR}/libassimp.so)
+
+add_library(opencv
+        SHARED
+        IMPORTED)
+set_target_properties(opencv
+        PROPERTIES IMPORTED_LOCATION
+        ${SO_DIR}/libopencv_java3.so)
 #----------------------end-----------------------
 
 # 如果你本地的库（native-lib）想要调用log库的方法，
@@ -96,6 +111,9 @@ target_link_libraries(
         avfilter
         avformat
         swscale
+
+        assimp
+        opencv
 
         GLESv3
         EGL

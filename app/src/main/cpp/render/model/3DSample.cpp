@@ -4,7 +4,9 @@
 
 #include "3DSample.h"
 
-Type3DSample::Type3DSample() {
+Type3DSample::Type3DSample(): xoffset(0.0f), yoffset(0.0f), distance(0.0f) {
+    glm::mat4 tmpMat = glm::mat4(1.0f);
+    model = glm::translate(tmpMat, glm::vec3(0.0f, -3.0f, 0.0f));
 }
 
 Type3DSample::~Type3DSample() {}
@@ -27,10 +29,35 @@ void Type3DSample::draw() {
     glm::mat4 view = camera.getViewMatrix();
     shader.setMat4("projection", projection);
     shader.setMat4("view", view);
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+
+
+    if (distance != 0) {
+        glm::vec3 cross = glm::cross(glm::vec3(0.0f, 0.0f, 1.0), glm::vec3(xoffset, yoffset, 0.0f));
+        glm::mat4 tmpMat = glm::mat4(1.0f);
+        model = glm::rotate(model, distance, cross);
+        tmpMat *= model;
+        model = tmpMat;
+    }
+
     shader.setMat4("model", model);
 
     ourModel.Draw(shader);
+    distance = 0.0f;
+}
+
+void Type3DSample::rorate(float x, float y, float distance) {
+    distance = distance/80.0f;
+    if (x > 0 && y > 0) {
+        y = -y;
+    } else if (x <= 0 && y > 0) {
+        x = -x;
+        distance = -distance;
+    } else if (x > 0 && y < 0) {
+        y = -y;
+    } else if (x <= 0 && y < 0) {
+        y = -y;
+    }
+    this->xoffset = x;
+    this->yoffset = y;
+    this->distance = distance;
 }

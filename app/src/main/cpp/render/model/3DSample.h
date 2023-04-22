@@ -21,11 +21,16 @@ public:
 
     void init() override;
     void draw() override;
+    void rorate(float xoffset, float yoofset, float distance);
 
 private:
     Shader shader;
     Camera camera;
     Model ourModel;
+    float xoffset;
+    float yoffset;
+    float distance;
+    glm::mat4 model;
 };
 
 #endif //DEMO_3DSAMPLE_H

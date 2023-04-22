@@ -13,7 +13,7 @@ void Type3DSample::init() {
     shader = Shader("3D/3d.vert", "3D/3d.frag");
     camera = Camera(glm::vec3(0.0f, 0.0f, 13.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                     -90.0f, 0.0f);
-    ourModel = Model("/data/data/com.ou.demo/files/model/nanosuit");
+    ourModel = Model("/data/data/com.ou.demo/files/model/poly/Apricot_02_hi_poly.obj");
 }
 
 void Type3DSample::draw() {
@@ -28,7 +28,7 @@ void Type3DSample::draw() {
     shader.setMat4("projection", projection);
     shader.setMat4("view", view);
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
     shader.setMat4("model", model);
 

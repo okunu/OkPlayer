@@ -16,6 +16,7 @@ file(GLOB src-files
         ${CMAKE_SOURCE_DIR}/glUtil/*.cpp
         ${CMAKE_SOURCE_DIR}/render/*.cpp
         ${CMAKE_SOURCE_DIR}/render/light/*.cpp
+        ${CMAKE_SOURCE_DIR}/render/advance/*.cpp
         ${CMAKE_SOURCE_DIR}/render/base/*.cpp
         ${CMAKE_SOURCE_DIR}/render/model/*.cpp
         ${CMAKE_SOURCE_DIR}/jniHelper/*.cpp)

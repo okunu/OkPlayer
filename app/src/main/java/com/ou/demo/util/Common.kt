@@ -26,5 +26,6 @@ object Common {
         ParallelLight,
         MoreLight,
         Type3D,
+        Stencil
     }
 }

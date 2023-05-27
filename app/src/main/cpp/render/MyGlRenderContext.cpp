@@ -21,6 +21,7 @@
 #include "light/ParallelLightSample.h"
 #include "light/MoreLightSample.h"
 #include "model/3DSample.h"
+#include "advance/StencilSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -123,6 +124,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new MoreLightSample();
     } else if (type == RenderType::Type3D) {
         mSample = new Type3DSample();
+    } else if (type == RenderType::Stencil) {
+        mSample = new StencilSample();
     }
 }
 

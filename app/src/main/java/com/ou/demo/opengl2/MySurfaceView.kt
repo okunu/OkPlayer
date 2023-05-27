@@ -23,6 +23,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
         glNativeRender = MyNativeRender().also {
             glRender = MyGlRender(it)
         }
+        setEGLConfigChooser(8,8,8,8,16,8);
         setRenderer(glRender)
         //不设置这个就会不停地刷新，设置这个就会有需要再刷新，比如uniform时就需要取消这个设置
 //        renderMode = RENDERMODE_WHEN_DIRTY
@@ -108,7 +109,7 @@ class MySurfaceView(context: Context, attributeSet: AttributeSet): GLSurfaceView
 
         override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
             Util.log("onSurfaceCreate---- thread = ${Thread.currentThread().name}")
-            nativeRender.native_init(Common.RenderType.SimpleLight.ordinal)
+            nativeRender.native_init(Common.RenderType.Stencil.ordinal)
             nativeRender.native_onSurfaceCreate(holder.surface)
         }
 

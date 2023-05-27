@@ -25,6 +25,7 @@ private:
     GLuint mFirstId;
     GLuint mSecId;
     Shader objectShader;
+    Shader singleShader;
     Camera camera;
 };
 

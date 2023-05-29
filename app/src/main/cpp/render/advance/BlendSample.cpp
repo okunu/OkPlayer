@@ -4,9 +4,9 @@
 
 #include <vector>
 #include "BlendSample.h"
+#include <map>
 
-BlendSample::BlendSample() : mVao(0), mGrassVao(0), mFirstId(0), mGrassId(0) {
-
+BlendSample::BlendSample() : mVao(0), mGrassVao(0), mFirstId(0), mGrassId(0), mFloorVao(0), mFloorId(0) {
 }
 
 BlendSample::~BlendSample() noexcept {
@@ -66,6 +66,15 @@ void BlendSample::prepareData() {
             -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
             -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
     };
+    GLfloat flatVertices[] = {
+            5.0f, -0.5f,  5.0f,  2.0f,  0.0f,
+            -5.0f, -0.5f,  5.0f,  0.0f,  0.0f,
+            -5.0f, -0.5f, -5.0f,  0.0f,  2.0f,
+
+            5.0f, -0.5f,  5.0f,  2.0f,  0.0f,
+            -5.0f, -0.5f, -5.0f,  0.0f,  2.0f,
+            5.0f, -0.5f, -5.0f,  2.0f,  2.0f
+    };
     float transparentVertices[] = {
             // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
             0.0f, 0.5f, 0.0f, 0.0f, 0.0f,
@@ -105,6 +114,19 @@ void BlendSample::prepareData() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                           (const void *) (3 * sizeof(float)));
     glBindVertexArray(0);
+
+    glGenVertexArrays(1, &mFloorVao);
+    glBindVertexArray(mFloorVao);
+    GLuint floorvbo;
+    glGenBuffers(1, &floorvbo);
+    glBindBuffer(GL_ARRAY_BUFFER, floorvbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(flatVertices), flatVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void *) 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                          (const void *) (3 * sizeof(float)));
+    glBindVertexArray(0);
 }
 
 void BlendSample::prepareTexture() {
@@ -124,7 +146,7 @@ void BlendSample::prepareTexture() {
 
     void *nsPixel;
     int nsWidth, nsHeiht;
-    MyGlRenderContext::getInstance()->getBitmap("res/ns.png", &nsPixel, nsWidth, nsHeiht);
+    MyGlRenderContext::getInstance()->getBitmap("res/window.png", &nsPixel, nsWidth, nsHeiht);
     LOGI("nsWidth = %d, nsHeiht = %d", nsWidth, nsHeiht);
     glGenTextures(1, &mGrassId);
     glBindTexture(GL_TEXTURE_2D, mGrassId);
@@ -135,12 +157,37 @@ void BlendSample::prepareTexture() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, nsWidth, nsHeiht,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, nsPixel);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
+
+    void *floorPixel;
+    int floorWidth, floorHeiht;
+    MyGlRenderContext::getInstance()->getBitmap("res/floor.png", &floorPixel, floorWidth, floorHeiht);
+    LOGI("floorWidth = %d, floorHeiht = %d", floorWidth, floorHeiht);
+    glGenTextures(1, &mFloorId);
+    glBindTexture(GL_TEXTURE_2D, mFloorId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, floorWidth, floorHeiht,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, floorPixel);
+    glBindTexture(GL_TEXTURE_2D, GL_NONE);
 }
 
 void BlendSample::draw() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    std::vector<glm::vec3> vegetation
+            {
+                    glm::vec3(-1.5f, 0.0f, -0.48f),
+                    glm::vec3(1.5f, 0.0f, 0.51f),
+                    glm::vec3(0.0f, 0.0f, 0.7f),
+                    glm::vec3(-0.3f, 0.0f, -2.3f),
+                    glm::vec3(0.5f, 0.0f, -0.6f)
+            };
 
     objectShader.use();
     glBindVertexArray(mVao);
@@ -161,24 +208,28 @@ void BlendSample::draw() {
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
     objectShader.setMat4("model", model);
-    glBindTexture(GL_TEXTURE_2D, mGrassId);
+    glBindTexture(GL_TEXTURE_2D, mFirstId);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    std::vector<glm::vec3> vegetation
-            {
-                    glm::vec3(-1.5f, 0.0f, -0.48f),
-                    glm::vec3(1.5f, 0.0f, 0.51f),
-                    glm::vec3(0.0f, 0.0f, 0.7f),
-                    glm::vec3(-0.3f, 0.0f, -2.3f),
-                    glm::vec3(0.5f, 0.0f, -0.6f)
-            };
+    glBindVertexArray(mFloorVao);
+    glBindTexture(GL_TEXTURE_2D, mFloorId);
+    model = glm::mat4(1.0f);
+    objectShader.setMat4("model", model);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    std::map<float, glm::vec3> sorted;
+    for (int i = 0; i < vegetation.size(); ++i) {
+        float distance = glm::length(camera.position - vegetation[i]);
+        sorted[distance] = vegetation[i];
+    }
 
     glBindVertexArray(mGrassVao);
     glBindTexture(GL_TEXTURE_2D, mGrassId);
-    for (unsigned int i = 0; i < vegetation.size(); i++)
+
+    for(std::map<float,glm::vec3>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); ++it)
     {
         model = glm::mat4(1.0f);
-        model = glm::translate(model, vegetation[i]);
+        model = glm::translate(model, it->second);
         objectShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }

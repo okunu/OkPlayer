@@ -24,6 +24,8 @@ private:
     GLuint mGrassVao;
     GLuint mFirstId;
     GLuint mGrassId;
+    GLuint mFloorVao;
+    GLuint mFloorId;
     Shader objectShader;
     Camera camera;
 };

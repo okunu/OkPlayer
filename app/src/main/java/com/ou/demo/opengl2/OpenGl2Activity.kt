@@ -2,6 +2,7 @@ package com.ou.demo.opengl2
 
 import android.os.Bundle
 import android.view.View
+import android.view.Window
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.ou.demo.databinding.ActivityOpengl2Binding
@@ -13,6 +14,7 @@ class OpenGl2Activity: AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE)
         binding = ActivityOpengl2Binding.inflate(layoutInflater)
         setContentView(binding.root)
         setDirectionVisible(false)

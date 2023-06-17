@@ -28,5 +28,6 @@ object Common {
         Type3D,
         Stencil,
         Blend,
+        FrameBuffer,
     }
 }

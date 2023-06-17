@@ -19,6 +19,7 @@ public:
     virtual void prepareTexture();
     virtual void rorate(float xoffset, float yoofset, float distance);
     virtual void scale(float d);
+    virtual void onSurfaceChanged();
 
 protected:
     GLuint m_ProgramObj;

@@ -23,6 +23,7 @@
 #include "model/3DSample.h"
 #include "advance/StencilSample.h"
 #include "advance/BlendSample.h"
+#include "advance/FrameBufferSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -68,6 +69,9 @@ void MyGlRenderContext::onSurfaceChanged(int width, int height) {
     glViewport(0, 0, width, height);
     mWidth = width;
     mHeight = height;
+    if (mSample) {
+        mSample->onSurfaceChanged();
+    }
 }
 
 void MyGlRenderContext::onDrawFrame() {
@@ -129,6 +133,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new StencilSample();
     } else if (type == RenderType::Blend) {
         mSample = new BlendSample();
+    } else if (type == RenderType::FrameBuffer) {
+        mSample = new FrameBufferSample();
     }
 }
 

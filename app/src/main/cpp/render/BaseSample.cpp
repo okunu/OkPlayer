@@ -31,3 +31,6 @@ void BaseSample::rorate(float xoffset, float yoofset, float distance) {
 
 void BaseSample::scale(float d) {
 }
+
+void BaseSample::onSurfaceChanged() {
+}

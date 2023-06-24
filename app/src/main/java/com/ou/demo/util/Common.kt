@@ -29,5 +29,6 @@ object Common {
         Stencil,
         Blend,
         FrameBuffer,
+        SkyBox,
     }
 }

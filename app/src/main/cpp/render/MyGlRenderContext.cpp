@@ -24,6 +24,7 @@
 #include "advance/StencilSample.h"
 #include "advance/BlendSample.h"
 #include "advance/FrameBufferSample.h"
+#include "advance/SkyBoxSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -135,6 +136,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new BlendSample();
     } else if (type == RenderType::FrameBuffer) {
         mSample = new FrameBufferSample();
+    } else if (type == RenderType::SkyBox) {
+        mSample = new SkyBoxSample();
     }
 }
 

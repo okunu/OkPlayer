@@ -1,10 +1,15 @@
 #version 300 es
 precision mediump float;
-in vec2 v_texCoord;
 out vec4 outColor;
 
-uniform sampler2D cubeId;
+in vec3 normal;
+in vec3 position;
+
+uniform samplerCube skybox;
+uniform vec3 cameraPos;
 
 void main() {
-    outColor = texture(cubeId, v_texCoord);
+    vec3 I = normalize(position - cameraPos);
+    vec3 R = reflect(I, normalize(normal));
+    outColor = vec4(texture(skybox, R).rgb, 1.0);
 }

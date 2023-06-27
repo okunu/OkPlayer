@@ -17,6 +17,7 @@ public:
     void draw() override;
     void prepareData() override;
     void prepareTexture() override;
+    void rorate(float xoffset, float yoofset, float distance) override;
 
 private:
     GLuint mSkyVao;

@@ -1,13 +1,16 @@
 #version 300 es
-layout(location = 0) in vec3 a_position;
-layout(location = 1) in vec2 a_texCoord;
-out vec2 v_texCoord;
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNormal;
+
+out vec3 normal;
+out vec3 position;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 void main() {
-    gl_Position = projection * view * model * vec4(a_position, 1.0);
-    v_texCoord = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
+    normal = mat3(transpose(inverse(model))) * aNormal;
+    position = vec3(model * vec4(aPos, 1.0));
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
 }

@@ -30,5 +30,6 @@ object Common {
         Blend,
         FrameBuffer,
         SkyBox,
+        UniformBuffer,
     }
 }

@@ -25,6 +25,7 @@
 #include "advance/BlendSample.h"
 #include "advance/FrameBufferSample.h"
 #include "advance/SkyBoxSample.h"
+#include "advance/UniformBufferSample.h"
 
 MyGlRenderContext* MyGlRenderContext::mInstance = nullptr;
 
@@ -138,6 +139,8 @@ void MyGlRenderContext::initSampler(int type) {
         mSample = new FrameBufferSample();
     } else if (type == RenderType::SkyBox) {
         mSample = new SkyBoxSample();
+    } else if (type == RenderType::UniformBuffer) {
+        mSample = new UniformBufferSample();
     }
 }
 

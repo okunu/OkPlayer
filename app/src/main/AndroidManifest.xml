@@ -34,27 +34,30 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
-
-        <activity android:name=".surface.SurfaceActivity" android:exported="true">
-        </activity>
-
-        <activity android:name=".audio.AudioActivity" android:exported="true">
-        </activity>
-
-        <activity android:name=".video.VideoActivity" android:exported="true">
-        </activity>
-
-        <activity android:name=".opengl.OpenGlActivity" android:exported="true">
-
-        </activity>
-
-        <activity android:name=".opengl2.OpenGl2Activity" android:exported="true">
+        <activity
+            android:name=".surface.SurfaceActivity"
+            android:exported="true"></activity>
+        <activity
+            android:name=".audio.AudioActivity"
+            android:exported="true"></activity>
+        <activity
+            android:name=".video.VideoActivity"
+            android:exported="true"></activity>
+        <activity
+            android:name=".opengl.OpenGlActivity"
+            android:exported="true"></activity>
+        <activity
+            android:name=".opengl2.OpenGl2Activity"
+            android:exported="true"></activity>
+        <activity
+            android:name=".player.PlayerActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
     </application>
 
 </manifest>

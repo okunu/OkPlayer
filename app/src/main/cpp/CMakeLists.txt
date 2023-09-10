@@ -9,7 +9,9 @@ include_directories(
         render
         glUtil
         jniHelper
+        player
     )
+
 
 file(GLOB src-files
         ${CMAKE_SOURCE_DIR}/*.cpp
@@ -19,7 +21,9 @@ file(GLOB src-files
         ${CMAKE_SOURCE_DIR}/render/advance/*.cpp
         ${CMAKE_SOURCE_DIR}/render/base/*.cpp
         ${CMAKE_SOURCE_DIR}/render/model/*.cpp
+        ${CMAKE_SOURCE_DIR}/player/*.cpp
         ${CMAKE_SOURCE_DIR}/jniHelper/*.cpp)
+
 
 # 添加本地so库 native-lib：这个是声明引用so库的名称 SHARED：表示共享so库文件
 # 构建so库的源文件

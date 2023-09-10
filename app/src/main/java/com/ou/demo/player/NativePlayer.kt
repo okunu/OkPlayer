@@ -51,4 +51,6 @@ class NativePlayer {
     external fun playVideo(path: String, surface: Surface)
 
     external fun playAudio(path: String)
+
+    external fun play(_path: String, surface: Surface)
 }

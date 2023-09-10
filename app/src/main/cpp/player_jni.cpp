@@ -3,15 +3,11 @@
 #include <jni.h>
 #include <android/log.h>
 #include <string>
+#include "player/Player.h"
+#include "LogUtil.h"
 
-#define LOG(...) __android_log_print(ANDROID_LOG_INFO,"okunu",__VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO,"okunu",__VA_ARGS__)
 
-extern "C"{
-#include <libavutil/avutil.h>
-}
-
-#include <jni.h>
-#include <string>
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 #include <android/log.h>
@@ -25,8 +21,6 @@ extern "C" {
 #include "libavutil/imgutils.h"
 #include "libswresample/swresample.h"
 }
-
-#define LOG(FORMAT, ...) __android_log_print(ANDROID_LOG_INFO, "player", FORMAT, ##__VA_ARGS__);
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -42,13 +36,13 @@ Java_com_ou_demo_player_NativePlayer_playVideo(JNIEnv *env, jobject thiz, jstrin
     // 打开视频文件
     result = avformat_open_input(&format_context, path, NULL, NULL);
     if (result < 0) {
-        LOG("Player Error : Can not open video file");
+        LOGI("Player Error : Can not open video file");
         return;
     }
     // 查找视频文件的流信息
     result = avformat_find_stream_info(format_context, NULL);
     if (result < 0) {
-        LOG("Player Error : Can not find video file stream info");
+        LOGI("Player Error : Can not find video file stream info");
         return;
     }
     // 查找视频编码器
@@ -61,7 +55,7 @@ Java_com_ou_demo_player_NativePlayer_playVideo(JNIEnv *env, jobject thiz, jstrin
     }
     // 没找到视频流
     if (video_stream_index == -1) {
-        LOG("Player Error : Can not find video stream");
+        LOGI("Player Error : Can not find video stream");
         return;
     }
     // 初始化视频编码器上下文
@@ -70,13 +64,13 @@ Java_com_ou_demo_player_NativePlayer_playVideo(JNIEnv *env, jobject thiz, jstrin
     // 初始化视频编码器
     AVCodec *video_codec = avcodec_find_decoder(video_codec_context->codec_id);
     if (video_codec == NULL) {
-        LOG("Player Error : Can not find video codec");
+        LOGI("Player Error : Can not find video codec");
         return;
     }
     // R3 打开视频解码器
     result = avcodec_open2(video_codec_context, video_codec, NULL);
     if (result < 0) {
-        LOG("Player Error : Can not find video stream");
+        LOGI("Player Error : Can not find video stream");
         return;
     }
     // 获取视频的宽高
@@ -85,14 +79,14 @@ Java_com_ou_demo_player_NativePlayer_playVideo(JNIEnv *env, jobject thiz, jstrin
     // R4 初始化 Native Window 用于播放视频
     ANativeWindow *native_window = ANativeWindow_fromSurface(env, surface);
     if (native_window == NULL) {
-        LOG("Player Error : Can not create native window");
+        LOGI("Player Error : Can not create native window");
         return;
     }
     // 通过设置宽高限制缓冲区中的像素数量，而非屏幕的物理显示尺寸。
     // 如果缓冲区与物理屏幕的显示尺寸不相符，则实际显示可能会是拉伸，或者被压缩的图像
     result = ANativeWindow_setBuffersGeometry(native_window, videoWidth, videoHeight, WINDOW_FORMAT_RGBA_8888);
     if (result < 0) {
-        LOG("Player Error : Can not set native window buffer");
+        LOGI("Player Error : Can not set native window buffer");
         ANativeWindow_release(native_window);
         return;
     }
@@ -121,16 +115,16 @@ Java_com_ou_demo_player_NativePlayer_playVideo(JNIEnv *env, jobject thiz, jstrin
     while (av_read_frame(format_context, packet) >= 0) {
         // 匹配视频流
         if (packet->stream_index == video_stream_index) {
-            LOG("read a packet flag:%d", packet->flags)
+            LOGI("read a packet flag:%d", packet->flags);
             // 解码
             result = avcodec_send_packet(video_codec_context, packet);
             if (result < 0 && result != AVERROR(EAGAIN) && result != AVERROR_EOF) {
-                LOG("Player Error : codec step 1 fail");
+                LOGI("Player Error : codec step 1 fail");
                 return;
             }
 //            result = avcodec_receive_frame(video_codec_context, frame);
             while (avcodec_receive_frame(video_codec_context, frame) == 0) {
-                LOG("read a frame flag:%lld", frame->pkt_dts)
+                LOGI("read a frame flag:%lld", frame->pkt_dts);
                 // 数据格式转换
                 result = sws_scale(
                         data_convert_context,
@@ -138,13 +132,13 @@ Java_com_ou_demo_player_NativePlayer_playVideo(JNIEnv *env, jobject thiz, jstrin
                         0, videoHeight,
                         rgba_frame->data, rgba_frame->linesize);
                 if (result <= 0) {
-                    LOG("Player Error : data convert fail");
+                    LOGI("Player Error : data convert fail");
                     return;
                 }
                 // 播放
                 result = ANativeWindow_lock(native_window, &window_buffer, NULL);
                 if (result < 0) {
-                    LOG("Player Error : Can not lock native window");
+                    LOGI("Player Error : Can not lock native window");
                 } else {
                     // 将图像绘制到界面上
                     // 注意 : 这里 rgba_frame 一行的像素和 window_buffer 一行的像素长度可能不一致
@@ -194,7 +188,7 @@ Java_com_ou_demo_player_NativePlayer_playAudio(JNIEnv *env, jobject thiz, jstrin
     avformat_open_input(&format_context, path, nullptr, nullptr);
     result = avformat_find_stream_info(format_context, nullptr);
     if (result < 0) {
-        LOG("Player Error : Can not find video file stream info");
+        LOGI("Player Error : Can not find video file stream info");
         return;
     }
 
@@ -206,7 +200,7 @@ Java_com_ou_demo_player_NativePlayer_playAudio(JNIEnv *env, jobject thiz, jstrin
     }
 
     if (audio_stream_index == -1) {
-        LOG("Player Error : Can not find audio stream");
+        LOGI("Player Error : Can not find audio stream");
         return;
     }
 
@@ -215,13 +209,13 @@ Java_com_ou_demo_player_NativePlayer_playAudio(JNIEnv *env, jobject thiz, jstrin
 
     AVCodec *audio_codec = avcodec_find_decoder(audio_codec_context->codec_id);
     if (audio_codec == NULL) {
-        LOG("Player Error : Can not find audio codec");
+        LOGI("Player Error : Can not find audio codec");
         return;
     }
 
     result = avcodec_open2(audio_codec_context, audio_codec, nullptr);
     if (audio_codec == NULL) {
-        LOG("Player Error : Can not find audio codec");
+        LOGI("Player Error : Can not find audio codec");
         return;
     }
 
@@ -249,7 +243,7 @@ Java_com_ou_demo_player_NativePlayer_playAudio(JNIEnv *env, jobject thiz, jstrin
         if (packet->stream_index == audio_stream_index) {
             result = avcodec_send_packet(audio_codec_context, packet);
             if (result < 0 && result != AVERROR(EAGAIN) && result != AVERROR_EOF) {
-                LOG("Player Error : codec step 1 fail");
+                LOGI("Player Error : codec step 1 fail");
                 return;
             }
             while (avcodec_receive_frame(audio_codec_context, frame) == 0) {
@@ -272,4 +266,27 @@ Java_com_ou_demo_player_NativePlayer_playAudio(JNIEnv *env, jobject thiz, jstrin
     avformat_close_input(&format_context);
     avformat_free_context(format_context);
     env->ReleaseStringUTFChars(path_, path);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ou_demo_player_NativePlayer_play(JNIEnv *env, jobject thiz, jstring _path,
+                                          jobject surface) {
+    const char* path = env->GetStringUTFChars(_path, 0);
+    int result = 1;
+    Player* player;
+    player_init(&player, env, thiz, surface);
+    if (result > 0) {
+        result = format_init(player, path);
+    }
+    if (result > 0) {
+        result = codec_init(player, AVMEDIA_TYPE_VIDEO);
+    }
+    if (result > 0) {
+        result = codec_init(player, AVMEDIA_TYPE_AUDIO);
+    }
+    if (result > 0) {
+
+    }
+    env->ReleaseStringUTFChars(_path, path);
 }

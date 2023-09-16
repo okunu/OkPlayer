@@ -3,11 +3,22 @@
 //
 #include "Player.h"
 #include "LogUtil.h"
+#include "JniHelper.h"
+#include <unistd.h>
+
+/* no AV sync correction is done if below the minimum AV sync threshold */
+#define AV_SYNC_THRESHOLD_MIN 0.04
+/* AV sync correction is done if above the maximum AV sync threshold */
+#define AV_SYNC_THRESHOLD_MAX 0.1
+/* If a frame duration is longer than this, it will not be duplicated to compensate AV sync */
+#define AV_SYNC_FRAMEDUP_THRESHOLD 0.1
+/* no AV correction is done if too big error */
+#define AV_NOSYNC_THRESHOLD 10.0
 
 #define FAIL_CODE -1
 
 void player_init(Player **player, JNIEnv *env, jobject instance, jobject surface) {
-    *player = (Player *) (new Player);
+    *player = (Player *) malloc(sizeof(Player));
     JavaVM *java_vm;
     env->GetJavaVM(&java_vm);
     (*player)->java_vm = java_vm;
@@ -18,18 +29,17 @@ void player_init(Player **player, JNIEnv *env, jobject instance, jobject surface
 int format_init(Player *player, const char *path) {
     int result;
     av_register_all();
-    AVFormatContext *format_context = avformat_alloc_context();
-    result = avformat_open_input(&format_context, path, NULL, NULL);
+    player->format_context = avformat_alloc_context();
+    result = avformat_open_input(&(player->format_context), path, NULL, NULL);
     if (result < 0) {
         LOGI("Player Error : Can not open video file");
         return FAIL_CODE;
     }
-    result = avformat_find_stream_info(format_context, NULL);
+    result = avformat_find_stream_info(player->format_context, NULL);
     if (result < 0) {
         LOGI("Player Error : Can not find video file stream info");
         return FAIL_CODE;
     }
-    player->format_context = format_context;
     return 1;
 }
 
@@ -90,9 +100,9 @@ int video_prepare(Player *player, JNIEnv *env) {
     int buffer_size = av_image_get_buffer_size(AV_PIX_FMT_RGBA, videoWidth, videoHeight, 1);
     player->video_out_buffer = (uint8_t *) av_malloc(buffer_size * sizeof(uint8_t));
     av_image_fill_arrays(player->rgba_frame->data, player->rgba_frame->linesize,
-                         player->video_out_buffer, AV_PIX_FMT_ARGB, videoWidth, videoHeight, 1);
+                         player->video_out_buffer, AV_PIX_FMT_RGBA, videoWidth, videoHeight, 1);
     player->sws_context = sws_getContext(videoWidth, videoHeight, codec_context->pix_fmt,
-                                         videoWidth, videoHeight, AV_PIX_FMT_ARGB, SWS_BICUBIC,
+                                         videoWidth, videoHeight, AV_PIX_FMT_RGBA, SWS_BICUBIC,
                                          nullptr, nullptr, nullptr);
     return 1;
 }
@@ -185,20 +195,126 @@ void player_release(Player *player) {
 }
 
 void play_start(Player *player) {
+    player->audio_clock = 0;
     player->video_queue = (Queue *) malloc(sizeof(Queue));
     player->audio_queue = (Queue *) malloc(sizeof(Queue));
-    queue_init(player->video_queue);
-    queue_init(player->audio_queue);
+    queue_init(player->video_queue, "video");
+    queue_init(player->audio_queue, "audio");
     thread_init(player);
 }
 
-void* produce(Player* player) {
-    AVPacket* packet = av_packet_alloc();
+void *produce(Player *player, int* i) {
+    LOGI("produce i = %d", *i);
+    AVPacket *packet = av_packet_alloc();
     for (;;) {
-        
+        int result = av_read_frame(player->format_context, packet);
+        if (result < 0) {
+            LOGI("avreadframe is less 0");
+            break;
+        }
+        if (packet->stream_index == player->video_stream_index) {
+            queue_in(player->video_queue, packet);
+        } else if (packet->stream_index == player->audio_stream_index) {
+            queue_in(player->audio_queue, packet);
+        }
+        packet = av_packet_alloc();
     }
+    break_block(player->video_queue);
+    break_block(player->audio_queue);
+    for (;;) {
+        if (queue_is_empty(player->video_queue) && queue_is_empty(player->audio_queue)) {
+            break;
+        }
+    }
+    player_release(player);
+    return nullptr;
 }
 
-void thread_init(Player *player) {
+void *consumer(Consumer *consumer) {
+    Player *player = consumer->player;
+    int index = consumer->stream_index;
+    JNIEnv *env = GetJniEnv();
+    if (env == nullptr) {
+        LOGI("jni is null , return");
+        return nullptr;
+    }
+    AVCodecContext *codec_context;
+    AVStream *stream;
+    Queue *queue;
+    int result = -1;
+    if (index == player->video_stream_index) {
+        codec_context = player->video_codec_context;
+        stream = player->format_context->streams[player->video_stream_index];
+        queue = player->video_queue;
+        video_prepare(player, env);
+    } else if (index == player->audio_stream_index) {
+        codec_context = player->audio_codec_context;
+        stream = player->format_context->streams[player->audio_stream_index];
+        queue = player->audio_queue;
+        audio_prepare(player, env);
+    }
+    double tatal = stream->duration * av_q2d(stream->time_base);
+    AVFrame *frame = av_frame_alloc();
+    for (;;) {
+        AVPacket *packet = queue_out(queue);
+        if (packet == nullptr) {
+            LOGI("consume packet is null");
+            break;
+        }
+        result = avcodec_send_packet(codec_context, packet);
+        if (result < 0 && result != AVERROR(EAGAIN) && result != AVERROR_EOF) {
+            LOGI("Player Error : codec step 1 fail");
+            av_packet_free(&packet);
+            continue;
+        }
+        while (avcodec_receive_frame(codec_context, frame) == 0) {
+            if (index == player->video_stream_index) {
+                double audio_clock = player->audio_clock;
+                double timestamp;
+                if (packet->pts == AV_NOPTS_VALUE) {
+                    timestamp = 0;
+                } else {
+                    timestamp = av_frame_get_best_effort_timestamp(frame) * av_q2d(stream->time_base);
+                }
+                double frame_rate = av_q2d(stream->avg_frame_rate);
+                frame_rate += frame->repeat_pict * (frame_rate * 0.5);
+                if (timestamp == 0.0) {
+                    usleep((unsigned long) (frame_rate * 1000));
+                } else {
+                    if (fabs(timestamp - audio_clock) > AV_SYNC_THRESHOLD_MIN &&
+                        fabs(timestamp - audio_clock) < AV_SYNC_THRESHOLD_MAX) {
+                        if (timestamp > audio_clock) {
+                            usleep((unsigned long) ((timestamp - audio_clock) * 1000000));
+                        }
+                    }
+                }
+                video_play(player, frame, env);
+            } else if (index == player->audio_stream_index) {
+                player->audio_clock = packet->pts * av_q2d(stream->time_base);
+                audio_play(player, frame, env);
+            }
+        }
+        av_packet_unref(packet);
+    }
+    player->java_vm->DetachCurrentThread();
+    return nullptr;
+}
 
+std::thread produceT, video_consumerT, audio_consumerT;
+
+void thread_init(Player *player) {
+    int i = 10;
+    produceT = std::thread(produce, player, &i);
+
+    Consumer *video_consumer = (Consumer*) malloc(sizeof(Consumer));
+    video_consumer->player = player;
+    video_consumer->stream_index = player->video_stream_index;
+    video_consumerT = std::thread(consumer, video_consumer);
+    LOGI("video");
+
+    Consumer *audio_consumer = (Consumer*) malloc(sizeof(Consumer));
+    audio_consumer->player = player;
+    audio_consumer->stream_index = player->audio_stream_index;
+    audio_consumerT = std::thread(consumer, audio_consumer);
+    LOGI("audio");
 }

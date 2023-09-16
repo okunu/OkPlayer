@@ -286,7 +286,7 @@ Java_com_ou_demo_player_NativePlayer_play(JNIEnv *env, jobject thiz, jstring _pa
         result = codec_init(player, AVMEDIA_TYPE_AUDIO);
     }
     if (result > 0) {
-
+        play_start(player);
     }
     env->ReleaseStringUTFChars(_path, path);
 }

@@ -44,6 +44,8 @@ typedef struct _Player {
     int out_channel;
     jmethodID play_audio_track_method_id;
     Queue *audio_queue;
+
+    double audio_clock;
 } Player;
 
 typedef struct _Consumer {
@@ -73,8 +75,8 @@ void play_start(Player *player);
 
 void thread_init(Player* player);
 
-void* produce(Player* player);
+void* produce(Player* player, int* i);
 
-void* consumer(Player* player);
+void* consumer(Consumer* consumer);
 
 #endif //DEMO_PLAYER_H

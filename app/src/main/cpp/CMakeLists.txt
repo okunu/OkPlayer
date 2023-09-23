@@ -10,6 +10,7 @@ include_directories(
         glUtil
         jniHelper
         player
+        thread
     )
 
 

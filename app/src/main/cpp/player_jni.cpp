@@ -5,6 +5,7 @@
 #include <string>
 #include "player/Player.h"
 #include "LogUtil.h"
+#include "ThreadPool.h"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,"okunu",__VA_ARGS__)
 
@@ -273,20 +274,31 @@ JNIEXPORT void JNICALL
 Java_com_ou_demo_player_NativePlayer_play(JNIEnv *env, jobject thiz, jstring _path,
                                           jobject surface) {
     const char* path = env->GetStringUTFChars(_path, 0);
-    int result = 1;
-    Player* player;
-    player_init(&player, env, thiz, surface);
-    if (result > 0) {
-        result = format_init(player, path);
-    }
-    if (result > 0) {
-        result = codec_init(player, AVMEDIA_TYPE_VIDEO);
-    }
-    if (result > 0) {
-        result = codec_init(player, AVMEDIA_TYPE_AUDIO);
-    }
-    if (result > 0) {
-        play_start(player);
-    }
+//    int result = 1;
+//    Player* player;
+//    player_init(&player, env, thiz, surface);
+//    if (result > 0) {
+//        result = format_init(player, path);
+//    }
+//    if (result > 0) {
+//        result = codec_init(player, AVMEDIA_TYPE_VIDEO);
+//    }
+//    if (result > 0) {
+//        result = codec_init(player, AVMEDIA_TYPE_AUDIO);
+//    }
+//    if (result > 0) {
+//        play_start(player);
+//    }
+
+    ThreadPool pool(2);
+    auto result = pool.submit([](int a, int b){
+        return a + b;
+    }, 7, 2);
+    LOGI("result = %d", result.get());
+
+    auto result2 = pool.submit([](int a, int b){
+        return a + b;
+    }, 3, 4);
+    LOGI("result2 = %d", result2.get());
     env->ReleaseStringUTFChars(_path, path);
 }

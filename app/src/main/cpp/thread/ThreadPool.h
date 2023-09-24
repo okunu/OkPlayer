@@ -13,6 +13,7 @@
 #include <vector>
 #include <future>
 #include "LogUtil.h"
+#include <chrono>
 
 using namespace std;
 
@@ -20,14 +21,14 @@ class ThreadPool {
 public:
     using Task = std::function<void()>;
 
-    ThreadPool(int num): thread_num_(num), run_(true){
+    ThreadPool(int num) : thread_num_(num), run_(true) {
         addThread();
     }
 
-    ~ThreadPool(){
+    ~ThreadPool() {
         run_ = false;
         cv.notify_all();
-        for (auto& item:thread_list_) {
+        for (auto &item: thread_list_) {
             if (item.joinable()) {
                 item.join();
             }
@@ -35,20 +36,24 @@ public:
     }
 
     template<typename F, typename... Args>
-    auto submit(F&& f, Args&&... args)-> future<decltype(f(args...))> {
+    auto submit(const char* flag, F &&f, Args &&... args) -> future<decltype(f(args...))> {
+        lock_guard<mutex> lock(mutex_);
+        LOGI("submit task %s", flag);
+        auto start = std::chrono::high_resolution_clock::now();
         if (!run_) {
             LOGI("thread pool shutdown");
         }
         using RetType = decltype(f(args...));
-        auto task = make_shared<packaged_task<RetType()>>(bind(forward<F>(f), forward<Args>(args)...));
+        auto task = make_shared<packaged_task<RetType()>>(
+                bind(forward<F>(f), forward<Args>(args)...));
         future<RetType> tmp = task->get_future();
-        {
-            lock_guard<mutex> lock(mutex_);
-            queue_.emplace([task](){
-                (*task)();
-            });
-        }
-        cv.notify_one();
+        queue_.emplace([task]() {
+            (*task)();
+        });
+        cv.notify_all();
+        auto end = std::chrono::high_resolution_clock::now();  // 记录结束时间
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);  // 计算执行时间
+        LOGI("submit end %s, duration = %d", flag, duration.count());
         return tmp;
     }
 
@@ -56,21 +61,19 @@ public:
 private:
     void addThread() {
         for (int i = 0; i < thread_num_; ++i) {
-            thread_list_.emplace_back(thread([this](){
+            thread_list_.emplace_back(thread([this, i]() {
                 while (run_) {
+                    unique_lock<mutex> lock(mutex_);
                     Task task;
-                    {
-                        unique_lock<mutex> lock(mutex_);
-                        cv.wait(lock, [this](){
-                            return !run_ || !queue_.empty();
-                        });
-                        LOGI("thread pool size = %d", queue_.size());
-                        if (queue_.empty()) {
-                            break;
-                        }
-                        task = move(queue_.front());
-                        queue_.pop();
+                    cv.wait(lock, [this]() {
+                        return !run_ || !queue_.empty();
+                    });
+                    LOGI("thread pool size = %zu , current thread is %d", queue_.size(), i);
+                    if (queue_.empty()) {
+                        break;
                     }
+                    task = std::move(queue_.front());
+                    queue_.pop();
                     task();
                 }
             }));

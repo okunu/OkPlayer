@@ -9,6 +9,8 @@ class NativePlayer {
 
     private var audioTrack: AudioTrack? = null
 
+    private var nativeRef: Long = 0
+
     fun createAudioTrack(sampleRate: Int, channels: Int) {
         var channelConfig: Int = 0
         if (channels == 1) {
@@ -18,7 +20,8 @@ class NativePlayer {
         } else {
             channelConfig = AudioFormat.CHANNEL_OUT_MONO
         }
-        val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT)
+        val bufferSize =
+            AudioTrack.getMinBufferSize(sampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT)
         audioTrack = AudioTrack(
             AudioManager.STREAM_MUSIC,
             sampleRate,
@@ -48,9 +51,23 @@ class NativePlayer {
         audioTrack = null
     }
 
+    init {
+        nativeRef = init_player()
+    }
+
+    fun realPlay(_path: String, surface: Surface) {
+        if (nativeRef != 0L) {
+            real_play(nativeRef, _path, surface)
+        }
+    }
+
     external fun playVideo(path: String, surface: Surface)
 
     external fun playAudio(path: String)
 
     external fun play(_path: String, surface: Surface)
+
+    external fun init_player(): Long
+
+    external fun real_play(ref: Long, _path: String, surface: Surface)
 }

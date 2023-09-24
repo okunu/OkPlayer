@@ -32,20 +32,29 @@ class PlayerActivity : AppCompatActivity() {
 //                val path = checkFile("res/yongqi.mp4")
 //                player.playAudio(path)
 //            }
-            val path = checkFile("res/yongqi.mp4")
-            player.play(path, binding.surfaceView.holder.surface)
+            checkFile("res/yongqi.mp4") { path ->
+                Log.i(TAG, "start play $path")
+                player.realPlay(path, binding.surfaceView.holder.surface)
+            }
         }
     }
 
-    fun checkFile(assetPath: String): String {
+    fun checkFile(assetPath: String, action: (path: String) -> Unit): String {
         val fileName = assetPath.substring(assetPath.indexOf("/") + 1)
         val desPath = filesDir.absolutePath + File.separator + fileName
+        if (File(desPath).exists()) {
+            Log.i(TAG, "$desPath is exist")
+            action(desPath)
+            return desPath
+        }
         try {
+            Log.i(TAG, "copy file $desPath")
             assets.open(assetPath).use {
                 FileOutputStream(desPath).use { out ->
                     FileUtils.copy(it, out)
                 }
             }
+            action(desPath)
         } catch (e: Exception) {
             Log.e(TAG, "checkFile $assetPath", e)
             return ""

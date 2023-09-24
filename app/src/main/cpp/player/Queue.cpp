@@ -1,7 +1,7 @@
 #include "Queue.h"
 #include "LogUtil.h"
 
-void queue_init(Queue* queue, const char* name) {
+void queue_init(Queue *queue, const char *name) {
     queue->size = 0;
     queue->head = nullptr;
     queue->tail = nullptr;
@@ -9,9 +9,9 @@ void queue_init(Queue* queue, const char* name) {
     queue->name = name;
 }
 
-void queue_destroy(Queue* queue) {
-    Node* tmp = queue->head;
-    while (tmp != nullptr){
+void queue_destroy(Queue *queue) {
+    Node *tmp = queue->head;
+    while (tmp != nullptr) {
         queue->head = queue->head->next;
         free(tmp);
         tmp = queue->head;
@@ -22,29 +22,31 @@ void queue_destroy(Queue* queue) {
     queue->is_block = false;
 }
 
-bool queue_is_empty(Queue* queue) {
+bool queue_is_empty(Queue *queue) {
     if (queue->size == 0) {
         return true;
     }
     return false;
 }
 
-bool queue_is_full(Queue* queue) {
+int queue_size(Queue *queue) {
+    return queue->size;
+}
+
+bool queue_is_full(Queue *queue) {
     return queue->size == QUEUE_MAX_SIZE;
 }
 
-void queue_in(Queue* queue, NodeElement element) {
+void queue_in(Queue *queue, NodeElement element) {
     std::unique_lock<std::mutex> lock(queue->mutex);
-    if (queue->name == "video") {
-        LOGI("queue_in size = %d", queue->size);
-    }
-    while (queue_is_full(queue) && queue->is_block) {
-        queue->not_full_cv.notify_one();
-    }
-    if (queue->size >= QUEUE_MAX_SIZE) {
-        return;
-    }
-    Node* node = (Node*)malloc(sizeof(Node));
+//    if (queue->name == "video") {
+//        LOGI("queue_in size = %d", queue->size);
+//    }
+    queue->not_full_cv.wait(lock, [&](){
+//        LOGI("queue_in size = %d, is_block = %d", queue->size, queue->is_block);
+        return !queue_is_full(queue) || !queue->is_block;
+    });
+    Node *node = (Node *) malloc(sizeof(Node));
     node->data = element;
     node->next = nullptr;
     if (queue->head == nullptr) {
@@ -55,21 +57,23 @@ void queue_in(Queue* queue, NodeElement element) {
         queue->tail = node;
     }
     queue->size = queue->size + 1;
+    lock.unlock();
     queue->not_empty_cv.notify_one();
 }
 
-NodeElement queue_out(Queue* queue) {
-    std::unique_lock<std::mutex> lock(queue->mutex);
-    if (queue->name == "video") {
-        LOGI("queue_out size = %d", queue->size);
-    }
-    while (queue_is_empty(queue) && queue->is_block) {
-        queue->not_empty_cv.notify_one();
-    }
+NodeElement queue_out(Queue *queue) {
     if (queue->head == nullptr) {
         return NULL;
     }
-    Node* tmp = queue->head;
+    std::unique_lock<std::mutex> lock(queue->mutex);
+//    if (queue->name == "video") {
+//        LOGI("queue_out size = %d", queue->size);
+//    }
+    queue->not_empty_cv.wait(lock, [&](){
+//        LOGI("queue_out size = %d, is_block = %d", queue->size, queue->is_block);
+        return !queue_is_empty(queue) || !queue->is_block;
+    });
+    Node *tmp = queue->head;
     queue->head = queue->head->next;
     if (queue->head == nullptr) {
         queue->tail = nullptr;
@@ -77,13 +81,14 @@ NodeElement queue_out(Queue* queue) {
     auto value = tmp->data;
     free(tmp);
     queue->size = queue->size - 1;
+    lock.unlock();
     queue->not_full_cv.notify_one();
     return value;
 }
 
-void queue_clear(Queue* queue) {
+void queue_clear(Queue *queue) {
     std::unique_lock<std::mutex> lock(queue->mutex);
-    Node* node = queue->head;
+    Node *node = queue->head;
     while (node != nullptr) {
         queue->head = queue->head->next;
         free(node);
@@ -96,7 +101,7 @@ void queue_clear(Queue* queue) {
     queue->not_full_cv.notify_one();
 }
 
-void break_block(Queue* queue) {
+void break_block(Queue *queue) {
     queue->is_block = false;
     if (queue->name == "video") {
         LOGI("break_block size = %d", queue->size);

@@ -32,6 +32,8 @@ void queue_destroy(Queue* queue);
 
 bool queue_is_empty(Queue* queue);
 
+int queue_size(Queue* queue);
+
 bool queue_is_full(Queue* queue);
 
 void queue_in(Queue* queue, NodeElement element);

@@ -37,7 +37,7 @@ public:
 
     template<typename F, typename... Args>
     auto submit(const char* flag, F &&f, Args &&... args) -> future<decltype(f(args...))> {
-        lock_guard<mutex> lock(mutex_);
+        unique_lock<mutex> lock(mutex_);
         LOGI("submit task %s", flag);
         auto start = std::chrono::high_resolution_clock::now();
         if (!run_) {
@@ -50,7 +50,7 @@ public:
         queue_.emplace([task]() {
             (*task)();
         });
-        cv.notify_all();
+        cv.notify_one();
         auto end = std::chrono::high_resolution_clock::now();  // 记录结束时间
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);  // 计算执行时间
         LOGI("submit end %s, duration = %d", flag, duration.count());
@@ -63,13 +63,14 @@ private:
         for (int i = 0; i < thread_num_; ++i) {
             thread_list_.emplace_back(thread([this, i]() {
                 while (run_) {
+                    LOGI("current thread is %d", i);
                     unique_lock<mutex> lock(mutex_);
                     Task task;
                     cv.wait(lock, [this]() {
                         return !run_ || !queue_.empty();
                     });
                     LOGI("thread pool size = %zu , current thread is %d", queue_.size(), i);
-                    if (queue_.empty()) {
+                    if (queue_.empty() && !run_) {
                         break;
                     }
                     task = std::move(queue_.front());
@@ -84,7 +85,7 @@ private:
     std::queue<Task> queue_;
     vector<thread> thread_list_;
     int thread_num_;
-    bool run_;
+    bool run_ = true;
     mutex mutex_;
     condition_variable cv;
 };

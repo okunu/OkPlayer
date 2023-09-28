@@ -21,6 +21,7 @@ extern "C" {
 #include "Queue.h"
 #include <memory>
 #include "ThreadPool.h"
+#include "BlockQueue.h"
 
 #include <unistd.h>
 
@@ -41,6 +42,8 @@ using namespace std;
 class PlayerWrap {
 
 public:
+    typedef AVPacket* Element;
+
     PlayerWrap();
 
     ~PlayerWrap();
@@ -83,17 +86,16 @@ private:
     uint8_t *video_out_buffer;
     struct SwsContext *sws_context;
     AVFrame *rgba_frame;
-    AVFrame *video_frame;
-    Queue *video_queue;
+    BlockQueue<Element> video_queue;
 
     int audio_stream_index;
     AVCodecContext *audio_codec_context;
     uint8_t *audio_out_buffer;
     struct SwrContext *swr_context;
     int out_channel;
-    Queue *audio_queue;
+    BlockQueue<Element> audio_queue;
 
-    double audio_clock;
+    double audio_clock_;
 
     ThreadPool pool_{3};
     std::thread produceT, video_consumerT, audio_consumerT;

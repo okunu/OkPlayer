@@ -13,7 +13,6 @@ include_directories(
         thread
     )
 
-
 file(GLOB src-files
         ${CMAKE_SOURCE_DIR}/*.cpp
         ${CMAKE_SOURCE_DIR}/glUtil/*.cpp

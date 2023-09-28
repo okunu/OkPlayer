@@ -185,8 +185,6 @@ void PlayerWrap::release() {
     av_frame_free(&(rgba_frame));
     avcodec_close(audio_codec_context);
     swr_free(&(swr_context));
-    queue_destroy(video_queue);
-    queue_destroy(audio_queue);
     JNIEnv *env = GetJniEnv();
     env->DeleteGlobalRef(instance);
     env->DeleteGlobalRef(surface);
@@ -199,11 +197,16 @@ void PlayerWrap::release() {
 
 void PlayerWrap::play_start() {
     LOGI("play_start");
-    audio_clock = 0;
-    video_queue = (Queue *) malloc(sizeof(Queue));
-    audio_queue = (Queue *) malloc(sizeof(Queue));
-    queue_init(video_queue, "video");
-    queue_init(audio_queue, "audio");
+    audio_clock_ = 0;
+//    pool_.submit("produce", [&](){
+//        produce();
+//    });
+//    pool_.submit("video consumer", [&](int index){
+//        consumer(index);
+//    }, video_stream_index);
+//    pool_.submit("audio consumer", [&](int index){
+//        consumer(index);
+//    }, audio_stream_index);
 
     produceT = std::thread([&](){
         produce();
@@ -228,18 +231,18 @@ void *PlayerWrap::produce() {
             break;
         }
         if (packet->stream_index == video_stream_index) {
-            queue_in(video_queue, packet);
+            video_queue.push(packet);
         } else if (packet->stream_index == audio_stream_index) {
-            queue_in(audio_queue, packet);
+            audio_queue.push(packet);
         }
         packet = av_packet_alloc();
     }
-    LOGI("produce video size = %d", queue_size(video_queue));
-    LOGI("produce audio size = %d", queue_size(audio_queue));
-    break_block(video_queue);
-    break_block(audio_queue);
+    LOGI("produce video size = %d", video_queue.size());
+    LOGI("produce audio size = %d", audio_queue.size());
+    video_queue.stop();
+    audio_queue.stop();
     for (;;) {
-        if (queue_is_empty(video_queue) && queue_is_empty(audio_queue)) {
+        if (video_queue.is_empty() && audio_queue.is_empty()) {
             break;
         }
     }
@@ -256,23 +259,23 @@ void *PlayerWrap::consumer(int index) {
     }
     AVCodecContext *codec_context;
     AVStream *stream;
-    Queue *queue;
+    BlockQueue<Element>* queue;
     int result = -1;
     if (index == video_stream_index) {
         codec_context = video_codec_context;
         stream = format_context_->streams[video_stream_index];
-        queue = video_queue;
+        queue = &video_queue;
         video_prepare();
     } else if (index == audio_stream_index) {
         codec_context = audio_codec_context;
         stream = format_context_->streams[audio_stream_index];
-        queue = audio_queue;
+        queue = &audio_queue;
         audio_prepare();
     }
     double tatal = stream->duration * av_q2d(stream->time_base);
     AVFrame *frame = av_frame_alloc();
     for (;;) {
-        AVPacket *packet = queue_out(queue);
+        AVPacket *packet = queue->pop();
         if (packet == nullptr) {
             LOGI("consume packet is null");
             break;
@@ -285,7 +288,7 @@ void *PlayerWrap::consumer(int index) {
         }
         while (avcodec_receive_frame(codec_context, frame) == 0) {
             if (index == video_stream_index) {
-                double audio_clock = audio_clock;
+                double audio_clock = audio_clock_;
                 double timestamp;
                 if (packet->pts == AV_NOPTS_VALUE) {
                     timestamp = 0;
@@ -303,13 +306,13 @@ void *PlayerWrap::consumer(int index) {
                         fabs(timestamp - audio_clock) < AV_SYNC_THRESHOLD_MAX) {
                         if (timestamp > audio_clock) {
                             usleep((unsigned long) ((timestamp - audio_clock) * 1000000));
-//                            std::this_thread::sleep_for(std::chrono::milliseconds((unsigned long) ((timestamp - audio_clock) * 1)));
+//                            std::this_thread::sleep_for(std::chrono::milliseconds((unsigned long) ((timestamp - audio_clock) * 1000)));
                         }
                     }
                 }
                 video_play(frame);
             } else if (index == audio_stream_index) {
-                audio_clock = packet->pts * av_q2d(stream->time_base);
+                audio_clock_ = packet->pts * av_q2d(stream->time_base);
                 audio_play(frame);
             }
         }

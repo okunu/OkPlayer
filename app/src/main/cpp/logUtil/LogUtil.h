@@ -12,4 +12,6 @@
 
 #define LOGI(fmt, ...) __android_log_print(ANDROID_LOG_INFO,"okunu","[%s:%d] " fmt, __FILE_NAME__, __LINE__, ##__VA_ARGS__)
 
+#define LOGE(fmt, ...) __android_log_print(ANDROID_LOG_ERROR,"okunu","[%s:%d] " fmt, __FILE_NAME__, __LINE__, ##__VA_ARGS__)
+
 #endif //DEMO_LOGUTIL_H

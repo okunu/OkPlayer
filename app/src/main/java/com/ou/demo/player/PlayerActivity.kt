@@ -6,8 +6,6 @@ import android.util.Log
 import android.view.Window
 import androidx.appcompat.app.AppCompatActivity
 import com.ou.demo.databinding.ActivityPlayerLayoutBinding
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 
@@ -48,6 +46,9 @@ class PlayerActivity : AppCompatActivity() {
             return desPath
         }
         try {
+            if (File(desPath).parentFile?.exists() == false) {
+                File(desPath).parentFile?.mkdirs()
+            }
             Log.i(TAG, "copy file $desPath")
             assets.open(assetPath).use {
                 FileOutputStream(desPath).use { out ->
@@ -68,7 +69,7 @@ class PlayerActivity : AppCompatActivity() {
 }
 
 fun main() {
-    val path = "res/yongqi.mp4"
+    val path = "res/video/yongqi.mp4"
     val fileName = path.substring(path.indexOf("/") + 1)
     println(fileName)
 }

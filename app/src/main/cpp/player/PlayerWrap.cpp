@@ -177,13 +177,24 @@ void PlayerWrap::audio_play(AVFrame *frame) {
 void PlayerWrap::release() {
     LOGI("player_release");
     avformat_close_input(&(format_context_));
+    avformat_free_context(format_context_);
+    format_context_ = nullptr;
     av_free(video_out_buffer);
     av_free(audio_out_buffer);
     avcodec_close(video_codec_context);
+    avcodec_free_context(&video_codec_context);
+    video_codec_context = nullptr;
+
     ANativeWindow_release(native_window);
+    native_window = nullptr;
+
     sws_freeContext(sws_context);
     av_frame_free(&(rgba_frame));
+
     avcodec_close(audio_codec_context);
+    avcodec_free_context(&audio_codec_context);
+    audio_codec_context = nullptr;
+
     swr_free(&(swr_context));
     JNIEnv *env = GetJniEnv();
     env->DeleteGlobalRef(instance);

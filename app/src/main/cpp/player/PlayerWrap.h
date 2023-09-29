@@ -98,7 +98,6 @@ private:
     double audio_clock_;
 
     ThreadPool pool_{3};
-    std::thread produceT, video_consumerT, audio_consumerT;
 };
 
 #endif //OKPLAYER_PLAYERWRAP_H

@@ -61,6 +61,9 @@ public:
 
 
 private:
+    /**
+     * 线程内的锁加的范围要精准。只能在取数据的时候加锁，取完数据就是执行提交的任务，造成不能再放入锁内
+     */
     void addThread() {
         for (int i = 0; i < thread_num_; ++i) {
             thread_list_.emplace_back(thread([this, i]() {

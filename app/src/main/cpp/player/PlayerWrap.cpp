@@ -110,7 +110,7 @@ int PlayerWrap::video_prepare() {
 }
 
 int PlayerWrap::audio_prepare() {
-    LOGI("video_prepare");
+    LOGI("audio_prepare");
     auto env = GetJniEnv();
     AVCodecContext *codec_context = audio_codec_context;
     swr_context = swr_alloc();
@@ -243,15 +243,17 @@ void *PlayerWrap::produce() {
     audio_queue.stop();
     for (;;) {
         if (video_queue.is_empty() && audio_queue.is_empty()) {
+            LOGI("video queue is empty and audio queue is empty");
             break;
         }
     }
     release();
+    LOGI("produce end");
     return nullptr;
 }
 
 void *PlayerWrap::consumer(int index) {
-    LOGI("consumer index = %d", index);
+    LOGI("consumer index = %d videoIndex = %d", index, video_stream_index);
     JNIEnv *env = GetJniEnv();
     if (env == nullptr) {
         LOGI("jni is null , return");
@@ -318,6 +320,7 @@ void *PlayerWrap::consumer(int index) {
         }
         av_packet_unref(packet);
     }
+    LOGI("consumer end index = %d  audio_queue.size = %d  video_queue.size = %d", index, audio_queue.size(), video_queue.size());
     JavaVM* vm;
     env->GetJavaVM(&vm);
     if (vm != nullptr) {

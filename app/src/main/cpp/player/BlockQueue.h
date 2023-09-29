@@ -58,17 +58,16 @@ public:
         con_cv.notify_one();
     }
 
+    /**
+     * 如果停止时，只有一种情况，即不能再生产了，同时把剩余的东西消费完毕后就退出了，不再等待了
+     */
     T pop() {
-        if (stop_) {
-            return NULL;
-        }
         unique_lock<mutex> lock(mutext_);
-        while (is_empty()) {
+        while (is_empty() && !stop_) {
             pro_cv.notify_one();
             con_cv.wait(lock, [this]() { return !is_empty() || stop_; });
         }
-        if (stop_) {
-            pro_cv.notify_one();
+        if (is_empty() && stop_) {
             return NULL;
         }
         T t = queue_.front();

@@ -37,7 +37,6 @@ public:
 
     template<typename F, typename... Args>
     auto submit(const char* flag, F &&f, Args &&... args) -> future<decltype(f(args...))> {
-        unique_lock<mutex> lock(mutex_);
         LOGI("submit task %s", flag);
         auto start = std::chrono::high_resolution_clock::now();
         if (!run_) {
@@ -47,10 +46,13 @@ public:
         auto task = make_shared<packaged_task<RetType()>>(
                 bind(forward<F>(f), forward<Args>(args)...));
         future<RetType> tmp = task->get_future();
-        queue_.emplace([task]() {
-            (*task)();
-        });
-        cv.notify_one();
+        {
+            unique_lock<mutex> lock(mutex_);
+            queue_.emplace([task]() {
+                (*task)();
+            });
+            cv.notify_one();
+        }
         auto end = std::chrono::high_resolution_clock::now();  // 记录结束时间
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);  // 计算执行时间
         LOGI("submit end %s, duration = %d", flag, duration.count());
@@ -64,17 +66,19 @@ private:
             thread_list_.emplace_back(thread([this, i]() {
                 while (run_) {
                     LOGI("current thread is %d", i);
-                    unique_lock<mutex> lock(mutex_);
                     Task task;
-                    cv.wait(lock, [this]() {
-                        return !run_ || !queue_.empty();
-                    });
-                    LOGI("thread pool size = %zu , current thread is %d", queue_.size(), i);
-                    if (queue_.empty() && !run_) {
-                        break;
+                    {
+                        unique_lock<mutex> lock(mutex_);
+                        cv.wait(lock, [this]() {
+                            return !run_ || !queue_.empty();
+                        });
+                        LOGI("thread pool size = %zu , current thread is %d", queue_.size(), i);
+                        if (queue_.empty() && !run_) {
+                            break;
+                        }
+                        task = std::move(queue_.front());
+                        queue_.pop();
                     }
-                    task = std::move(queue_.front());
-                    queue_.pop();
                     task();
                 }
             }));

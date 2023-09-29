@@ -198,27 +198,27 @@ void PlayerWrap::release() {
 void PlayerWrap::play_start() {
     LOGI("play_start");
     audio_clock_ = 0;
-//    pool_.submit("produce", [&](){
-//        produce();
-//    });
-//    pool_.submit("video consumer", [&](int index){
-//        consumer(index);
-//    }, video_stream_index);
-//    pool_.submit("audio consumer", [&](int index){
-//        consumer(index);
-//    }, audio_stream_index);
-
-    produceT = std::thread([&](){
+    pool_.submit("produce", [&](){
         produce();
     });
-
-    video_consumerT = std::thread([&](int index){
+    pool_.submit("video consumer", [&](int index){
         consumer(index);
     }, video_stream_index);
-
-    audio_consumerT = std::thread([&](int index){
+    pool_.submit("audio consumer", [&](int index){
         consumer(index);
     }, audio_stream_index);
+
+//    produceT = std::thread([&](){
+//        produce();
+//    });
+//
+//    video_consumerT = std::thread([&](int index){
+//        consumer(index);
+//    }, video_stream_index);
+//
+//    audio_consumerT = std::thread([&](int index){
+//        consumer(index);
+//    }, audio_stream_index);
 }
 
 void *PlayerWrap::produce() {

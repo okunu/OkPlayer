@@ -27,6 +27,10 @@ class PlayerActivity : AppCompatActivity() {
                 player.realPlay(path, binding.surfaceView.holder.surface)
             }
         }
+
+        binding.btnPauseVideo.setOnClickListener {
+            player.realPlayOrPause()
+        }
     }
 
     fun checkFile(assetPath: String, action: (path: String) -> Unit): String {

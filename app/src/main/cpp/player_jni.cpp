@@ -323,3 +323,10 @@ Java_com_ou_demo_player_NativePlayer_real_1play(JNIEnv *env, jobject thiz, jlong
     }
     env->ReleaseStringUTFChars(_path, path);
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_ou_demo_player_NativePlayer_play_1or_1pause(JNIEnv *env, jobject thiz, jlong ref) {
+
+    PlayerWrap* player = reinterpret_cast<PlayerWrap*>(ref);
+    player->pause();
+}

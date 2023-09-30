@@ -61,6 +61,12 @@ class NativePlayer {
         }
     }
 
+    fun realPlayOrPause() {
+        if (nativeRef != 0L) {
+            play_or_pause(nativeRef)
+        }
+    }
+
     external fun playVideo(path: String, surface: Surface)
 
     external fun playAudio(path: String)
@@ -70,4 +76,6 @@ class NativePlayer {
     external fun init_player(): Long
 
     external fun real_play(ref: Long, _path: String, surface: Surface)
+
+    external fun play_or_pause(ref: Long)
 }

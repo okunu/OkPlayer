@@ -47,6 +47,7 @@ public:
     ~PlayerWrap();
     int player_init(jobject instance, jobject surface, const char* path);
     void play_start();
+    void pause();
 
 private:
     int format_init(const char *path);
@@ -57,8 +58,8 @@ private:
     void video_play(AVFrame *frame);
     void audio_play(AVFrame *frame);
     void release();
-    void *produce();
-    void *consumer(int index);
+    void produce();
+    void consumer(int index);
 
 private:
     jobject instance;
@@ -85,7 +86,12 @@ private:
 
     double audio_clock_;
 
+    bool is_pause_;
+
     ThreadPool pool_{3};
+
+    mutex mutex_;
+    condition_variable cv_;
 };
 
 #endif //OKPLAYER_PLAYERWRAP_H

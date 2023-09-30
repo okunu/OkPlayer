@@ -7,21 +7,24 @@
 #include "LogUtil.h"
 #include <chrono>
 
-PlayerWrap::PlayerWrap(){
+PlayerWrap::PlayerWrap() : is_pause_(false) {
 }
 
 PlayerWrap::~PlayerWrap() {
     LOGI("PlayerWrap delete");
     //回收数据
+    release();
 }
 
-int PlayerWrap::player_init(jobject instance_, jobject surface_, const char* path) {
+int PlayerWrap::player_init(jobject instance_, jobject surface_, const char *path) {
     LOGI("player_init");
     auto env = GetJniEnv();
     instance = env->NewGlobalRef(instance_);
     surface = env->NewGlobalRef(surface_);
     video_queue.start();
     audio_queue.start();
+
+    is_pause_ = false;
 
     int result = 1;
     result = format_init(path);
@@ -116,8 +119,8 @@ int PlayerWrap::video_prepare() {
     av_image_fill_arrays(rgba_frame->data, rgba_frame->linesize,
                          video_out_buffer, AV_PIX_FMT_RGBA, videoWidth, videoHeight, 1);
     sws_context = sws_getContext(videoWidth, videoHeight, codec_context->pix_fmt,
-                                         videoWidth, videoHeight, AV_PIX_FMT_RGBA, SWS_BICUBIC,
-                                         nullptr, nullptr, nullptr);
+                                 videoWidth, videoHeight, AV_PIX_FMT_RGBA, SWS_BICUBIC,
+                                 nullptr, nullptr, nullptr);
     return 1;
 }
 
@@ -211,7 +214,7 @@ void PlayerWrap::release() {
     JNIEnv *env = GetJniEnv();
     env->DeleteGlobalRef(instance);
     env->DeleteGlobalRef(surface);
-    JavaVM* vm;
+    JavaVM *vm;
     env->GetJavaVM(&vm);
     if (vm != nullptr) {
         vm->DetachCurrentThread();
@@ -221,13 +224,13 @@ void PlayerWrap::release() {
 void PlayerWrap::play_start() {
     LOGI("play_start");
     audio_clock_ = 0;
-    pool_.submit("produce", [&](){
+    pool_.submit("produce", [&]() {
         produce();
     });
-    pool_.submit("video consumer", [&](int index){
+    pool_.submit("video consumer", [&](int index) {
         consumer(index);
     }, video_stream_index);
-    pool_.submit("audio consumer", [&](int index){
+    pool_.submit("audio consumer", [&](int index) {
         consumer(index);
     }, audio_stream_index);
 
@@ -244,10 +247,23 @@ void PlayerWrap::play_start() {
 //    }, audio_stream_index);
 }
 
-void *PlayerWrap::produce() {
+void PlayerWrap::pause() {
+    lock_guard<mutex> lock(mutex_);
+    is_pause_ = !is_pause_;
+    LOGI("is pause: %d", is_pause_);
+    cv_.notify_one();
+}
+
+void PlayerWrap::produce() {
     LOGI("produce");
     AVPacket *packet = av_packet_alloc();
     for (;;) {
+        {
+            unique_lock<mutex> lock(mutex_);
+            while (is_pause_) {
+                cv_.wait(lock, [this]() { return !is_pause_; });
+            }
+        }
         int result = av_read_frame(format_context_, packet);
         if (result < 0) {
             LOGI("avreadframe is less 0");
@@ -272,19 +288,18 @@ void *PlayerWrap::produce() {
     }
     release();
     LOGI("produce end");
-    return nullptr;
 }
 
-void *PlayerWrap::consumer(int index) {
+void PlayerWrap::consumer(int index) {
     LOGI("consumer index = %d videoIndex = %d", index, video_stream_index);
     JNIEnv *env = GetJniEnv();
     if (env == nullptr) {
         LOGI("jni is null , return");
-        return nullptr;
+        return;
     }
     AVCodecContext *codec_context;
     AVStream *stream;
-    BlockQueue<Element>* queue;
+    BlockQueue<Element> *queue;
     int result = -1;
     if (index == video_stream_index) {
         codec_context = video_codec_context;
@@ -318,7 +333,8 @@ void *PlayerWrap::consumer(int index) {
                 if (packet->pts == AV_NOPTS_VALUE) {
                     timestamp = 0;
                 } else {
-                    timestamp = av_frame_get_best_effort_timestamp(frame) * av_q2d(stream->time_base);
+                    timestamp =
+                            av_frame_get_best_effort_timestamp(frame) * av_q2d(stream->time_base);
                 }
                 double frame_rate = av_q2d(stream->avg_frame_rate);
                 frame_rate += frame->repeat_pict * (frame_rate * 0.5);
@@ -343,11 +359,12 @@ void *PlayerWrap::consumer(int index) {
         }
         av_packet_unref(packet);
     }
-    LOGI("consumer end index = %d  audio_queue.size = %d  video_queue.size = %d", index, audio_queue.size(), video_queue.size());
-    JavaVM* vm;
+    LOGI("consumer end index = %d  audio_queue.size = %d  video_queue.size = %d", index,
+         audio_queue.size(), video_queue.size());
+    JavaVM *vm;
     env->GetJavaVM(&vm);
     if (vm != nullptr) {
         vm->DetachCurrentThread();
     }
-    return nullptr;
+    return;
 }

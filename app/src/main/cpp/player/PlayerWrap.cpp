@@ -20,6 +20,8 @@ void PlayerWrap::player_init(jobject instance_, jobject surface_) {
     auto env = GetJniEnv();
     instance = env->NewGlobalRef(instance_);
     surface = env->NewGlobalRef(surface_);
+    video_queue.start();
+    audio_queue.start();
 }
 
 int PlayerWrap::format_init(const char *path) {

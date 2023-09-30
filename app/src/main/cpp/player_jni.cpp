@@ -319,9 +319,7 @@ Java_com_ou_demo_player_NativePlayer_real_1play(JNIEnv *env, jobject thiz, jlong
     const char* path = env->GetStringUTFChars(_path, 0);
     int result = 1;
     player->player_init(thiz, surface);
-    if (result > 0) {
-        result = player->format_init(path);
-    }
+    result = player->format_init(path);
     if (result > 0) {
         result = player->codec_init(AVMEDIA_TYPE_VIDEO);
     }

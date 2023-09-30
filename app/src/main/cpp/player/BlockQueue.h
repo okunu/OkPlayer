@@ -82,6 +82,12 @@ public:
         con_cv.notify_all();
     }
 
+    void start() {
+        stop_ = false;
+        pro_cv.notify_all();
+        con_cv.notify_all();
+    }
+
 private:
     std::queue<T> queue_;
     mutex mutext_;

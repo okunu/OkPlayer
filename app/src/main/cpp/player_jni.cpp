@@ -317,15 +317,7 @@ Java_com_ou_demo_player_NativePlayer_real_1play(JNIEnv *env, jobject thiz, jlong
                                                 jobject surface) {
     PlayerWrap* player = reinterpret_cast<PlayerWrap*>(ref);
     const char* path = env->GetStringUTFChars(_path, 0);
-    int result = 1;
-    player->player_init(thiz, surface);
-    result = player->format_init(path);
-    if (result > 0) {
-        result = player->codec_init(AVMEDIA_TYPE_VIDEO);
-    }
-    if (result > 0) {
-        result = player->codec_init(AVMEDIA_TYPE_AUDIO);
-    }
+    int result = player->player_init(thiz, surface, path);
     if (result > 0) {
         player->play_start();
     }

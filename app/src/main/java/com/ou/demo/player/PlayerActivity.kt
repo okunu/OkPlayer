@@ -22,14 +22,6 @@ class PlayerActivity : AppCompatActivity() {
         player = NativePlayer()
 
         binding.btnVideo.setOnClickListener {
-//            GlobalScope.launch {
-//                val path = checkFile("res/yongqi.mp4")
-//                player.playVideo(path, binding.surfaceView.holder.surface)
-//            }
-//            GlobalScope.launch {
-//                val path = checkFile("res/yongqi.mp4")
-//                player.playAudio(path)
-//            }
             checkFile("res/yongqi.mp4") { path ->
                 Log.i(TAG, "start play $path")
                 player.realPlay(path, binding.surfaceView.holder.surface)

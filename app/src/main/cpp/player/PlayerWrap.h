@@ -43,33 +43,21 @@ class PlayerWrap {
 
 public:
     typedef AVPacket* Element;
-
     PlayerWrap();
-
     ~PlayerWrap();
-
-    void player_init(jobject instance, jobject surface);
-
-    int format_init(const char *path);
-
-    int find_stream_index(AVMediaType type);
-
-    int codec_init(AVMediaType type);
-
-    int video_prepare();
-
-    int audio_prepare();
-
-    void video_play(AVFrame *frame);
-
-    void audio_play(AVFrame *frame);
-
-    void release();
-
+    int player_init(jobject instance, jobject surface, const char* path);
     void play_start();
 
+private:
+    int format_init(const char *path);
+    int find_stream_index(AVMediaType type);
+    int codec_init(AVMediaType type);
+    int video_prepare();
+    int audio_prepare();
+    void video_play(AVFrame *frame);
+    void audio_play(AVFrame *frame);
+    void release();
     void *produce();
-
     void *consumer(int index);
 
 private:

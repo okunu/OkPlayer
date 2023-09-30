@@ -15,13 +15,23 @@ PlayerWrap::~PlayerWrap() {
     //回收数据
 }
 
-void PlayerWrap::player_init(jobject instance_, jobject surface_) {
+int PlayerWrap::player_init(jobject instance_, jobject surface_, const char* path) {
     LOGI("player_init");
     auto env = GetJniEnv();
     instance = env->NewGlobalRef(instance_);
     surface = env->NewGlobalRef(surface_);
     video_queue.start();
     audio_queue.start();
+
+    int result = 1;
+    result = format_init(path);
+    if (result > 0) {
+        result = codec_init(AVMEDIA_TYPE_VIDEO);
+    }
+    if (result > 0) {
+        result = codec_init(AVMEDIA_TYPE_AUDIO);
+    }
+    return result;
 }
 
 int PlayerWrap::format_init(const char *path) {

@@ -7,6 +7,7 @@
 #include "LogUtil.h"
 #include "ThreadPool.h"
 #include "PlayerWrap.h"
+#include "RealPlayer.h"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,"okunu",__VA_ARGS__)
 
@@ -329,4 +330,39 @@ Java_com_ou_demo_player_NativePlayer_play_1or_1pause(JNIEnv *env, jobject thiz, 
 
     PlayerWrap* player = reinterpret_cast<PlayerWrap*>(ref);
     player->pause();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ou_demo_player_PlayerSurfaceView_surfaceCreate(JNIEnv *env, jobject thiz, jlong ref,
+                                                        jobject surface) {
+    RealPlayer* player = reinterpret_cast<RealPlayer*>(ref);
+    player->surface_create();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ou_demo_player_PlayerSurfaceView_surfaceChange(JNIEnv *env, jobject thiz, jlong ref,
+                                                        jint width, jint height) {
+    RealPlayer* player = reinterpret_cast<RealPlayer*>(ref);
+    player->surface_changed(width, height);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ou_demo_player_NativePlayer2_play(JNIEnv *env, jobject thiz, jlong ref, jstring _path) {
+    RealPlayer* player = reinterpret_cast<RealPlayer*>(ref);
+    const char* path = env->GetStringUTFChars(_path, 0);
+    int result = player->player_init(path);
+    if (result > 0) {
+        player->play_start();
+    }
+    env->ReleaseStringUTFChars(_path, path);
+}
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_ou_demo_player_NativePlayer2_init_1player(JNIEnv *env, jobject thiz) {
+    RealPlayer* player = new RealPlayer();
+    return reinterpret_cast<jlong>(player);
 }

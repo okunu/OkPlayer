@@ -30,8 +30,10 @@ private:
 private:
     Shader shader;
     Camera camera;
-    GLuint tex_id_;
+    GLuint texture[3];
     GLuint vao_;
+    int width_;
+    int height_;
 };
 
 #endif //OKPLAYER_VIDEOSHADER_H

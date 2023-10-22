@@ -27,7 +27,7 @@ class PlayerActivity2 : AppCompatActivity() {
         player = NativePlayer2.instance
 
         binding.btnPlay.setOnClickListener {
-            checkFile("res/yongqi.mp4") { path ->
+            checkFile("res/video/yongqi.mp4") { path ->
                 Log.i(TAG, "start play $path")
                 player.realPlay(path, binding.surfaceView.holder.surface)
             }

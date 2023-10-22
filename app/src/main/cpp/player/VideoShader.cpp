@@ -4,7 +4,7 @@
 
 #include "VideoShader.h"
 
-VideoShader::VideoShader() : tex_id_(0), vao_(0) {
+VideoShader::VideoShader() : texture{0}, vao_(0) {
 
 }
 
@@ -13,15 +13,17 @@ VideoShader::~VideoShader() {
 }
 
 void VideoShader::init() {
-    shader = Shader("texture/texture.vert", "texture/texture.frag");
-    camera = Camera(glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 1.0f, 0.0f),
-                    -90.0f, 0.0f);
+    shader = Shader("yuv/yuv.vert", "yuv/yuv.frag");
+//    camera = Camera(glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+//                    -90.0f, 0.0f);
     prepareData();
-    prepareTexture();
 }
 
 void VideoShader::onSurfaceChanged(int width, int height) {
+    width_ = 716;
+    height_ = 1280;
     glViewport(0, 0, width, height);
+    prepareTexture();
 }
 
 void VideoShader::prepareData() {
@@ -56,15 +58,24 @@ void VideoShader::prepareData() {
 }
 
 void VideoShader::prepareTexture() {
-    glGenTextures(1, &tex_id_);
-    glBindTexture(GL_TEXTURE_2D, tex_id_);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glGenTextures(3, texture);
+    glBindTexture(GL_TEXTURE_2D, texture[0]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width_, height_, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, NULL);
 
-    glBindTexture(GL_TEXTURE_2D, GL_NONE);
+    glBindTexture(GL_TEXTURE_2D, texture[1]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width_/2, height_/2, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, NULL);
+
+    glBindTexture(GL_TEXTURE_2D, texture[2]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width_/2, height_/2, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, NULL);
 }
 
 void VideoShader::draw(AVFrame *frame) {
@@ -73,18 +84,31 @@ void VideoShader::draw(AVFrame *frame) {
 
     shader.use();
     glBindVertexArray(vao_);
+
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex_id_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame->width, frame->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, frame->data);
-    shader.setInt("s_TextureMap", 0);
+    glBindTexture(GL_TEXTURE_2D, texture[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame->linesize[0], frame->height, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, frame->data[0]);
+    shader.setInt("yTexture", 0);
 
-    glm::mat4 projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture[1]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame->linesize[1], frame->height/2, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, frame->data[1]);
+    shader.setInt("uTexture", 1);
 
-    glm::mat4 view = camera.getViewMatrix();
-    glm::mat4 model = glm::mat4(1.0f);
-    shader.setMat4("projection", projection);
-    shader.setMat4("view", view);
-    shader.setMat4("model", model);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, texture[2]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame->linesize[2], frame->height/2, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, frame->data[2]);
+    shader.setInt("vTexture", 2);
+
+//    glm::mat4 projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
+//    glm::mat4 view = camera.getViewMatrix();
+//    glm::mat4 model = glm::mat4(1.0f);
+//    shader.setMat4("projection", projection);
+//    shader.setMat4("view", view);
+//    shader.setMat4("model", model);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (const void*)0);
 }

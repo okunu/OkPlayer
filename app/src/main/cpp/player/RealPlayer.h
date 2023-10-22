@@ -22,6 +22,7 @@ extern "C" {
 #include "BlockQueue.h"
 #include "VideoShader.h"
 #include <unistd.h>
+#include "EglDisplay.h"
 
 #define FAIL_CODE -1
 #define SUCCESS_CODE 1
@@ -38,8 +39,7 @@ public:
     ~RealPlayer();
     int player_init(const char* path);
     void play_start();
-    void surface_create();
-    void surface_changed(int w, int h);
+    void surface_changed(int w, int h, EglDisplay& display);
 
 private:
     int format_init(const char *path);
@@ -63,10 +63,8 @@ private:
 
     ThreadPool pool_{2};
 
-    mutex mutex_;
-    condition_variable cv_;
-
     VideoShader shader_;
+    EglDisplay display_;
 };
 
 #endif //OKPLAYER_REALPLAYER_H

@@ -1,37 +1,32 @@
 package com.ou.demo.player
 
 import android.content.Context
-import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.view.Surface
+import android.view.SurfaceHolder
+import android.view.SurfaceView
 import com.ou.demo.util.Util
-import javax.microedition.khronos.egl.EGLConfig
-import javax.microedition.khronos.opengles.GL10
 
-class PlayerSurfaceView(context: Context, attr: AttributeSet) : GLSurfaceView(context, attr) {
+class PlayerSurfaceView(context: Context, attr: AttributeSet) : SurfaceView(context, attr) {
 
     init {
-        setEGLContextClientVersion(3)
-        setEGLConfigChooser(8,8,8,8,16,8)
-        setRenderer(PlayerGlRender())
+        holder.addCallback(PlayerGlRender())
     }
 
-    inner class PlayerGlRender(): GLSurfaceView.Renderer {
-
-        override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
+    inner class PlayerGlRender(): SurfaceHolder.Callback {
+        override fun surfaceCreated(holder: SurfaceHolder) {
             Util.log("onSurfaceCreate---- thread = ${Thread.currentThread().name}")
-            surfaceCreate(NativePlayer2.instance.getRef(), holder.surface)
         }
 
-        override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
-            Util.log("onSurfaceChanged----thread = ${Thread.currentThread().name}")
-            surfaceChange(NativePlayer2.instance.getRef(), width, height)
+        override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+            Util.log("surfaceChanged---- thread = ${Thread.currentThread().name}")
+            surfaceChange(NativePlayer2.instance.getRef(), width, height, holder.surface)
         }
 
-        override fun onDrawFrame(gl: GL10) {
+        override fun surfaceDestroyed(holder: SurfaceHolder) {
+            Util.log("surfaceDestroyed---- thread = ${Thread.currentThread().name}")
         }
     }
 
-    external fun surfaceCreate(ref: Long, surface: Surface)
-    external fun surfaceChange(ref: Long, width: Int, heiht: Int)
+    external fun surfaceChange(ref: Long, width: Int, heiht: Int, surface: Surface)
 }

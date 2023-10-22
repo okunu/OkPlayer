@@ -5,7 +5,7 @@
 #include "RealPlayer.h"
 #include "LogUtil.h"
 
-RealPlayer::RealPlayer() {
+RealPlayer::RealPlayer(): display_(NULL) {
 }
 
 RealPlayer::~RealPlayer() {
@@ -89,19 +89,21 @@ int RealPlayer::video_prepare() {
     sws_context = sws_getContext(videoWidth, videoHeight, codec_context->pix_fmt,
                                  videoWidth, videoHeight, AV_PIX_FMT_RGBA, SWS_BICUBIC,
                                  nullptr, nullptr, nullptr);
+    shader_.init();
     return 1;
 }
 
 void RealPlayer::video_play(AVFrame *frame) {
-    int video_height = video_codec_context->height;
-    int result = sws_scale(sws_context, (const uint8_t *const *) frame->data,
-                           frame->linesize, 0, video_height, rgba_frame->data,
-                           rgba_frame->linesize);
-    if (result <= 0) {
-        LOGI("Player Error : video data convert fail");
-        return;
-    }
-    shader_.draw(rgba_frame);
+//    int video_height = video_codec_context->height;
+//    int result = sws_scale(sws_context, (const uint8_t *const *) frame->data,
+//                           frame->linesize, 0, video_height, rgba_frame->data,
+//                           rgba_frame->linesize);
+//    if (result <= 0) {
+//        LOGI("Player Error : video data convert fail");
+//        return;
+//    }
+    shader_.draw(frame);
+    display_.swapBuffer();
 }
 
 void RealPlayer::release() {
@@ -149,7 +151,7 @@ void RealPlayer::produce() {
             break;
         }
     }
-    release();
+//    release();
     LOGI("produce end");
 }
 
@@ -179,9 +181,9 @@ void RealPlayer::consumer(int index) {
             continue;
         }
         while (avcodec_receive_frame(codec_context, frame) == 0) {
-            LOGI("receive frame: %d", frame->width);
+//            LOGI("receive frame: %d", frame->width);
             if (index == video_stream_index) {
-//                video_play(frame);
+                video_play(frame);
             }
         }
         av_packet_unref(packet);
@@ -190,10 +192,8 @@ void RealPlayer::consumer(int index) {
     return;
 }
 
-void RealPlayer::surface_create() {
-    shader_.init();
-}
-
-void RealPlayer::surface_changed(int w, int h) {
+void RealPlayer::surface_changed(int w, int h, EglDisplay& display) {
+    display_ = display;
+    display_.eglOpen();
     shader_.onSurfaceChanged(w, h);
 }

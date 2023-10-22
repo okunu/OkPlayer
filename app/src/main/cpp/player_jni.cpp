@@ -8,6 +8,7 @@
 #include "ThreadPool.h"
 #include "PlayerWrap.h"
 #include "RealPlayer.h"
+#include "EglDisplay.h"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,"okunu",__VA_ARGS__)
 
@@ -334,18 +335,12 @@ Java_com_ou_demo_player_NativePlayer_play_1or_1pause(JNIEnv *env, jobject thiz, 
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_ou_demo_player_PlayerSurfaceView_surfaceCreate(JNIEnv *env, jobject thiz, jlong ref,
-                                                        jobject surface) {
-    RealPlayer* player = reinterpret_cast<RealPlayer*>(ref);
-    player->surface_create();
-}
-
-extern "C"
-JNIEXPORT void JNICALL
 Java_com_ou_demo_player_PlayerSurfaceView_surfaceChange(JNIEnv *env, jobject thiz, jlong ref,
-                                                        jint width, jint height) {
+                                                        jint width, jint height, jobject surface) {
     RealPlayer* player = reinterpret_cast<RealPlayer*>(ref);
-    player->surface_changed(width, height);
+    ANativeWindow *nwin = ANativeWindow_fromSurface(env, surface);
+    EglDisplay display{nwin};
+    player->surface_changed(width, height, display);
 }
 
 extern "C"

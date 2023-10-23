@@ -89,7 +89,9 @@ int RealPlayer::video_prepare() {
     sws_context = sws_getContext(videoWidth, videoHeight, codec_context->pix_fmt,
                                  videoWidth, videoHeight, AV_PIX_FMT_RGBA, SWS_BICUBIC,
                                  nullptr, nullptr, nullptr);
+    display_.eglOpen();
     shader_.init();
+    shader_.onSurfaceChanged(width_, height_);
     return 1;
 }
 
@@ -193,7 +195,7 @@ void RealPlayer::consumer(int index) {
 }
 
 void RealPlayer::surface_changed(int w, int h, EglDisplay& display) {
+    width_ = w;
+    height_ = h;
     display_ = display;
-    display_.eglOpen();
-    shader_.onSurfaceChanged(w, h);
 }

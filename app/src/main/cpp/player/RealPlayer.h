@@ -65,6 +65,8 @@ private:
 
     VideoShader shader_;
     EglDisplay display_;
+    int width_;
+    int height_;
 };
 
 #endif //OKPLAYER_REALPLAYER_H

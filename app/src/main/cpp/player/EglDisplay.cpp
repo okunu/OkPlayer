@@ -49,12 +49,12 @@ int EglDisplay::eglOpen() {
     }
     eglContext_ = context;
 
-//    EGLint eglFormat;
-//    EGLBoolean success = eglGetConfigAttrib(display, context, EGL_NATIVE_VISUAL_ID, &eglFormat);
-//    if (!success) {
-//        LOGI("eglGetConfigAttrib failed");
-//        return -1;
-//    }
+    EGLint eglFormat;
+    EGLBoolean success = eglGetConfigAttrib(display, eglConfig, EGL_NATIVE_VISUAL_ID, &eglFormat);
+    if (!success) {
+        LOGI("eglGetConfigAttrib failed");
+        return -1;
+    }
 
     EGLSurface winSurface = eglCreateWindowSurface(display, eglConfig, window_, 0);
     if (winSurface == EGL_NO_SURFACE) {

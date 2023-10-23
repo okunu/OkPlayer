@@ -13,7 +13,7 @@ VideoShader::~VideoShader() {
 }
 
 void VideoShader::init() {
-    shader = Shader("yuv/yuv.vert", "yuv/yuv.frag");
+    shader = Shader("video/video.vert", "video/video.frag");
 //    camera = Camera(glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 1.0f, 0.0f),
 //                    -90.0f, 0.0f);
     prepareData();

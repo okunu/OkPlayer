@@ -5,7 +5,7 @@
 #include "RealPlayer.h"
 #include "LogUtil.h"
 
-RealPlayer::RealPlayer(): display_(NULL) {
+RealPlayer::RealPlayer() : display_(NULL) {
 }
 
 RealPlayer::~RealPlayer() {
@@ -14,10 +14,14 @@ RealPlayer::~RealPlayer() {
 
 int RealPlayer::player_init(const char *path) {
     video_queue.start();
+    audio_queue.start();
     int result = 1;
     result = format_init(path);
     if (result > 0) {
         result = codec_init(AVMEDIA_TYPE_VIDEO);
+    }
+    if (result > 0) {
+        result = codec_init(AVMEDIA_TYPE_AUDIO);
     }
     return result;
 }
@@ -72,7 +76,11 @@ int RealPlayer::codec_init(AVMediaType type) {
     if (type == AVMEDIA_TYPE_VIDEO) {
         video_stream_index = index;
         video_codec_context = codec_context;
+    } else if (type == AVMEDIA_TYPE_AUDIO) {
+        audio_stream_index = index;
+        audio_codec_context = codec_context;
     }
+    LOGI("audio index = %d, video index = %d", audio_stream_index, video_stream_index);
     return 1;
 }
 
@@ -117,6 +125,10 @@ void RealPlayer::release() {
     avcodec_free_context(&video_codec_context);
     video_codec_context = nullptr;
 
+    avcodec_close(audio_codec_context);
+    avcodec_free_context(&audio_codec_context);
+    audio_codec_context = nullptr;
+
     sws_freeContext(sws_context);
     av_frame_free(&(rgba_frame));
 }
@@ -129,6 +141,9 @@ void RealPlayer::play_start() {
     pool_.submit("video consumer", [&](int index) {
         consumer(index);
     }, video_stream_index);
+    pool_.submit("audio consumer", [&]() {
+        audioDecode();
+    });
 }
 
 void RealPlayer::produce() {
@@ -142,19 +157,86 @@ void RealPlayer::produce() {
         }
         if (packet->stream_index == video_stream_index) {
             video_queue.push(packet);
+        } else if (packet->stream_index == audio_stream_index) {
+            audio_queue.push(packet);
         }
         packet = av_packet_alloc();
     }
-    LOGI("produce video size = %d", video_queue.size());
+    LOGI("produce video size = %d  audio size = %d", video_queue.size(), audio_queue.size());
     video_queue.stop();
+    audio_queue.stop();
     for (;;) {
-        if (video_queue.is_empty()) {
+        if (video_queue.is_empty() && audio_queue.is_empty()) {
             LOGI("video queue is empty and audio queue is empty");
             break;
         }
     }
 //    release();
     LOGI("produce end");
+}
+
+int RealPlayer::audio_prepare() {
+    AVCodecContext *codec_context = audio_codec_context;
+    swr_context = swr_alloc();
+    audio_out_buffer = (uint8_t *) av_malloc(44100 * 2);
+    uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
+    enum AVSampleFormat out_format = AV_SAMPLE_FMT_S16;
+    int out_sample_rate = audio_codec_context->sample_rate;
+    swr_alloc_set_opts(swr_context,
+                       out_channel_layout, out_format, out_sample_rate,
+                       codec_context->channel_layout, codec_context->sample_fmt,
+                       codec_context->sample_rate,
+                       0, NULL);
+    swr_init(swr_context);
+    out_channel = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
+    audioPlayer.setCallback([&]() {
+        return this->audioDecodeOneFrame();
+    });
+    audioPlayer.init();
+    return 1;
+}
+
+int RealPlayer::audioDecodeOneFrame() {
+    int size = 0;
+    while (true) {
+        size = 0;
+        AVCodecContext *codec_context = audio_codec_context;
+        BlockQueue<Element> *queue = &audio_queue;
+        int result = -1;
+        AVFrame *frame = av_frame_alloc();
+        AVPacket *packet = queue->pop();
+        if (packet == nullptr) {
+            break;
+        }
+        //LOGI("packet: %d", packet->stream_index);
+        result = avcodec_send_packet(codec_context, packet);
+        if (result < 0 && result != AVERROR(EAGAIN) && result != AVERROR_EOF) {
+            LOGI("Player Error : codec step 1 fail audio");
+            av_packet_free(&packet);
+            return 0;
+        }
+        int ret = avcodec_receive_frame(codec_context, frame);
+        //LOGI("ret = %d", ret);
+        if (ret == 0) {
+            int nb = swr_convert(swr_context, &(audio_out_buffer), 44100 * 2,
+                                 (const uint8_t **) frame->data, frame->nb_samples);
+            int out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
+            size = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+            //LOGI("okunu size = %d channels: %d", size, frame->nb_samples);
+            audioPlayer.setAudioData(audio_out_buffer, size);
+            av_packet_unref(packet);
+            break;
+        } else {
+            LOGI("error and continue");
+            continue;
+        }
+    }
+    return size;
+}
+
+void RealPlayer::audioDecode() {
+    audio_prepare();
+    return;
 }
 
 void RealPlayer::consumer(int index) {
@@ -194,7 +276,7 @@ void RealPlayer::consumer(int index) {
     return;
 }
 
-void RealPlayer::surface_changed(int w, int h, EglDisplay& display) {
+void RealPlayer::surface_changed(int w, int h, EglDisplay &display) {
     width_ = w;
     height_ = h;
     display_ = display;

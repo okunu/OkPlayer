@@ -24,7 +24,6 @@ file(GLOB src-files
         ${CMAKE_SOURCE_DIR}/player/*.cpp
         ${CMAKE_SOURCE_DIR}/jniHelper/*.cpp)
 
-
 # 添加本地so库 native-lib：这个是声明引用so库的名称 SHARED：表示共享so库文件
 # 构建so库的源文件
 add_library(
@@ -124,6 +123,7 @@ target_link_libraries(
         EGL
         android
         jnigraphics
+        OpenSLES
 
         #ffmpeg------end------------
         ${log-lib}

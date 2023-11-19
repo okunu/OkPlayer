@@ -23,6 +23,7 @@ extern "C" {
 #include "VideoShader.h"
 #include <unistd.h>
 #include "EglDisplay.h"
+#include "AudioPlayer.h"
 
 #define FAIL_CODE -1
 #define SUCCESS_CODE 1
@@ -51,6 +52,10 @@ private:
     void produce();
     void consumer(int index);
 
+    void audioDecode();
+    int audioDecodeOneFrame();
+    int audio_prepare();
+
 private:
     AVFormatContext *format_context_;
 
@@ -61,7 +66,15 @@ private:
     AVFrame *rgba_frame;
     BlockQueue<Element> video_queue;
 
-    ThreadPool pool_{2};
+    int audio_stream_index;
+    AVCodecContext *audio_codec_context;
+    BlockQueue<Element> audio_queue;
+    uint8_t *audio_out_buffer;
+    struct SwrContext *swr_context;
+    int out_channel;
+    AudioPlayer audioPlayer;
+
+    ThreadPool pool_{3};
 
     VideoShader shader_;
     EglDisplay display_;

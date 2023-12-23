@@ -19,9 +19,11 @@ void VideoShader::init() {
     prepareData();
 }
 
-void VideoShader::onSurfaceChanged(int width, int height) {
+void VideoShader::onSurfaceChanged(int width, int height, int sw, int sh) {
     width_ = 716;
     height_ = 1280;
+    scale_width = sw;
+    scale_height = sh;
     glViewport(0, 0, width, height);
     prepareTexture();
 }
@@ -78,29 +80,33 @@ void VideoShader::prepareTexture() {
                  GL_UNSIGNED_BYTE, NULL);
 }
 
-void VideoShader::draw(AVFrame *frame) {
+void VideoShader::draw(uint8_t* data[]) {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    yuv_data[0] = data[0];
+    yuv_data[1] = data[1];
+    yuv_data[2] = data[2];
 
     shader.use();
     glBindVertexArray(vao_);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture[0]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame->linesize[0], frame->height, 0, GL_LUMINANCE,
-                 GL_UNSIGNED_BYTE, frame->data[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, scale_width, scale_height, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, yuv_data[0]);
     shader.setInt("yTexture", 0);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texture[1]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame->linesize[1], frame->height/2, 0, GL_LUMINANCE,
-                 GL_UNSIGNED_BYTE, frame->data[1]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, scale_width/2, scale_height/2, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, yuv_data[1]);
     shader.setInt("uTexture", 1);
 
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, texture[2]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame->linesize[2], frame->height/2, 0, GL_LUMINANCE,
-                 GL_UNSIGNED_BYTE, frame->data[2]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, scale_width/2, scale_height/2, 0, GL_LUMINANCE,
+                 GL_UNSIGNED_BYTE, yuv_data[2]);
     shader.setInt("vTexture", 2);
 
 //    glm::mat4 projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);

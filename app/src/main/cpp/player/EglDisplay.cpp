@@ -6,12 +6,16 @@
 #include "LogUtil.h"
 
 EglDisplay::EglDisplay(ANativeWindow *window): window_(window) {
+    eglOpen();
 }
 
 EglDisplay::~EglDisplay() {
 }
 
 int EglDisplay::eglOpen() {
+    if (window_ == nullptr) {
+        return -1;
+    }
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (display == EGL_NO_DISPLAY) {
         LOGI("egl display failed");
@@ -63,11 +67,17 @@ int EglDisplay::eglOpen() {
     }
     eglSurface_ = winSurface;
 
-    if (EGL_TRUE != eglMakeCurrent(display, winSurface, winSurface, context)) {
-        LOGI("eglmakecurrent failed");
-        return -1;
-    }
+//    if (EGL_TRUE != eglMakeCurrent(display, winSurface, winSurface, context)) {
+//        LOGI("eglmakecurrent failed");
+//        return -1;
+//    }
     return 0;
+}
+
+void EglDisplay::bindCurrent() {
+    if (EGL_TRUE != eglMakeCurrent(eglDisplay_, eglSurface_, eglSurface_, eglContext_)) {
+        LOGI("eglmakecurrent failed");
+    }
 }
 
 void EglDisplay::swapBuffer() {

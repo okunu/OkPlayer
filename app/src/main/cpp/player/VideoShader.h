@@ -20,8 +20,8 @@ public:
     ~VideoShader();
 
     void init();
-    void onSurfaceChanged(int width, int height);
-    void draw(AVFrame* frame);
+    void onSurfaceChanged(int width, int height, int scale_width, int scale_height);
+    void draw(uint8_t* data[]);
 
 private:
     void prepareData();
@@ -34,6 +34,10 @@ private:
     GLuint vao_;
     int width_;
     int height_;
+
+    uint8_t *yuv_data[3];
+    int scale_width;
+    int scale_height;
 };
 
 #endif //OKPLAYER_VIDEOSHADER_H

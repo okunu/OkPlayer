@@ -56,6 +56,9 @@ private:
     int audioDecodeOneFrame();
     int audio_prepare();
 
+    void adjustVideoScale();
+    void avFrameToYuvData(uint8_t* src_data[], int scr_width, int src_height, uint8_t* dst_data[], int line_size[]);
+
 private:
     AVFormatContext *format_context_;
 
@@ -80,6 +83,13 @@ private:
     EglDisplay display_;
     int width_;
     int height_;
+
+    uint8_t *yuv_data[3];
+    int scale_video_width;
+    int scale_video_height;
+    uint16_t video_width;
+    uint16_t video_height;
+
 };
 
 #endif //OKPLAYER_REALPLAYER_H

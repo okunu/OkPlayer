@@ -76,6 +76,9 @@ int RealPlayer::codec_init(AVMediaType type) {
     if (type == AVMEDIA_TYPE_VIDEO) {
         video_stream_index = index;
         video_codec_context = codec_context;
+        video_width = video_codec_context->width;
+        video_height = video_codec_context->height;
+        adjustVideoScale();
     } else if (type == AVMEDIA_TYPE_AUDIO) {
         audio_stream_index = index;
         audio_codec_context = codec_context;
@@ -95,25 +98,54 @@ int RealPlayer::video_prepare() {
     av_image_fill_arrays(rgba_frame->data, rgba_frame->linesize,
                          video_out_buffer, AV_PIX_FMT_RGBA, videoWidth, videoHeight, 1);
     sws_context = sws_getContext(videoWidth, videoHeight, codec_context->pix_fmt,
-                                 videoWidth, videoHeight, AV_PIX_FMT_RGBA, SWS_BICUBIC,
+                                 scale_video_width, scale_video_height, AV_PIX_FMT_YUV420P, SWS_BILINEAR,
                                  nullptr, nullptr, nullptr);
-    display_.eglOpen();
+    yuv_data[0] = new uint8_t[scale_video_width * scale_video_height];
+    yuv_data[1] = new uint8_t[scale_video_width * scale_video_height >> 2];
+    yuv_data[2] = new uint8_t[scale_video_width * scale_video_height >> 2];
+    display_.bindCurrent();
     shader_.init();
-    shader_.onSurfaceChanged(width_, height_);
+    shader_.onSurfaceChanged(width_, height_, scale_video_width, scale_video_height);
     return 1;
 }
 
 void RealPlayer::video_play(AVFrame *frame) {
-//    int video_height = video_codec_context->height;
-//    int result = sws_scale(sws_context, (const uint8_t *const *) frame->data,
-//                           frame->linesize, 0, video_height, rgba_frame->data,
-//                           rgba_frame->linesize);
-//    if (result <= 0) {
-//        LOGI("Player Error : video data convert fail");
-//        return;
-//    }
-    shader_.draw(frame);
+    if (scale_video_width != video_width || scale_video_height != video_height) {
+        uint8_t* local_yuv_data[4];
+        int yuv_linesize[4];
+        av_image_alloc(local_yuv_data, yuv_linesize, scale_video_width, scale_video_height, AV_PIX_FMT_YUV420P, 1);
+        sws_scale(sws_context, frame->data, frame->linesize, 0, video_height, local_yuv_data, yuv_linesize);
+        avFrameToYuvData(local_yuv_data, scale_video_width, scale_video_height, yuv_data, yuv_linesize);
+    }
+    shader_.draw(yuv_data);
     display_.swapBuffer();
+}
+
+void
+RealPlayer::avFrameToYuvData(uint8_t **src_data, int src_width, int src_height, uint8_t **dst_data,
+                             int *line_size) {
+    uint32_t pitchY = src_width;
+    uint32_t pitchU = src_width >> 1;
+    uint32_t pitchV = src_width >> 1;
+
+    uint8_t* avy = dst_data[0];
+    uint8_t* avu = dst_data[1];
+    uint8_t* avv = dst_data[2];
+
+    for (int y_index = 0; y_index < src_height; ++y_index) {
+        memcpy(avy, src_data[0] + y_index * line_size[0], pitchY);
+        avy += pitchY;
+    }
+
+    for (int u_index = 0; u_index < src_height >> 1; ++u_index) {
+        memcpy(avu, src_data[1] + u_index * line_size[1], pitchU);
+        avu += pitchU;
+    }
+
+    for (int v_index = 0; v_index < src_height >> 1; ++v_index) {
+        memcpy(avv, src_data[2] + v_index * line_size[2], pitchV);
+        avv += pitchV;
+    }
 }
 
 void RealPlayer::release() {
@@ -237,6 +269,21 @@ int RealPlayer::audioDecodeOneFrame() {
 void RealPlayer::audioDecode() {
     audio_prepare();
     return;
+}
+
+void RealPlayer::adjustVideoScale() {
+    if (video_width % 8 != 0) {
+        scale_video_width = ((video_width / 8) + 1) * 8;
+    } else {
+        scale_video_width = video_width;
+    }
+
+    if (video_height % 2 != 0) {
+        scale_video_height = ((video_height / 2) + 1) * 2;
+    } else {
+        scale_video_height = video_height;
+    }
+    LOGI("adjustVideoScale: vw: %d, vh: %d, sw: %d, sh: %d", video_width, video_height, scale_video_width, scale_video_height);
 }
 
 void RealPlayer::consumer(int index) {

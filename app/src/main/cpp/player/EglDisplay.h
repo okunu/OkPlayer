@@ -16,6 +16,7 @@ public:
     int eglOpen();
     int eglClose();
     void swapBuffer();
+    void bindCurrent();
 
 private:
     ANativeWindow* window_;

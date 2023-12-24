@@ -50,7 +50,7 @@ private:
     void video_play(AVFrame *frame);
     void release();
     void produce();
-    void consumer(int index);
+    void videoDecode(int index);
 
     void audioDecode();
     int audioDecodeOneFrame();
@@ -58,6 +58,7 @@ private:
 
     void adjustVideoScale();
     void avFrameToYuvData(uint8_t* src_data[], int scr_width, int src_height, uint8_t* dst_data[], int line_size[]);
+    bool handleFinish();
 
 private:
     AVFormatContext *format_context_;
@@ -99,6 +100,8 @@ private:
     uint16_t video_width;
     uint16_t video_height;
 
+    bool finish = false;
+    double audio_clock_;
 };
 
 #endif //OKPLAYER_REALPLAYER_H

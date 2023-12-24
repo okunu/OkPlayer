@@ -15,6 +15,7 @@ RealPlayer::~RealPlayer() {
 int RealPlayer::player_init(const char *path) {
     video_queue.start();
     audio_queue.start();
+    finish = false;
     int result = 1;
     result = format_init(path);
     if (result > 0) {
@@ -101,6 +102,26 @@ int RealPlayer::video_prepare() {
 }
 
 void RealPlayer::video_play(AVFrame *frame) {
+    double audio_clock = audio_clock_;
+    double timestamp;
+    auto stream = format_context_->streams[video_stream_index];
+    timestamp = av_frame_get_best_effort_timestamp(frame) * av_q2d(stream->time_base);
+    double frame_rate = av_q2d(stream->avg_frame_rate);
+    frame_rate += frame->repeat_pict * (frame_rate * 0.5);
+    //LOGI("timestamp = %f", timestamp);
+    if (timestamp == 0.0) {
+        usleep((unsigned long) (frame_rate * 1000));
+//                    std::this_thread::sleep_for(std::chrono::milliseconds((unsigned long)frame_rate));
+    } else {
+        if (fabs(timestamp - audio_clock) > AV_SYNC_THRESHOLD_MIN &&
+            fabs(timestamp - audio_clock) < AV_SYNC_THRESHOLD_MAX) {
+            LOGI("time diff: %f", (timestamp - audio_clock));
+            if (timestamp > audio_clock) {
+                usleep((unsigned long) ((timestamp - audio_clock) * 1000000));
+//                            std::this_thread::sleep_for(std::chrono::milliseconds((unsigned long) ((timestamp - audio_clock) * 1000)));
+            }
+        }
+    }
     if (scale_video_width != video_width || scale_video_height != video_height) {
         sws_scale(sws_context, frame->data, frame->linesize, 0, video_height, yuv_data, yuv_linesize);
     }
@@ -152,15 +173,17 @@ void RealPlayer::release() {
     sws_freeContext(sws_context);
 
     av_free(yuv_data);
+    av_free(audio_out_buffer);
 }
 
 void RealPlayer::play_start() {
     LOGI("play_start");
+    audio_clock_ = 0;
     pool_.submit("produce", [&]() {
         produce();
     });
-    pool_.submit("video consumer", [&](int index) {
-        consumer(index);
+    pool_.submit("videoDecode", [&](int index) {
+        videoDecode(index);
     }, video_stream_index);
     pool_.submit("audio consumer", [&]() {
         audioDecode();
@@ -184,15 +207,6 @@ void RealPlayer::produce() {
         packet = av_packet_alloc();
     }
     LOGI("produce video size = %d  audio size = %d", video_queue.size(), audio_queue.size());
-    video_queue.stop();
-    audio_queue.stop();
-    for (;;) {
-        if (video_queue.is_empty() && audio_queue.is_empty()) {
-            LOGI("video queue is empty and audio queue is empty");
-            break;
-        }
-    }
-//    release();
     LOGI("produce end");
 }
 
@@ -223,6 +237,9 @@ int RealPlayer::audio_prepare() {
 int RealPlayer::audioDecodeOneFrame() {
     int size = 0;
     while (true) {
+        if (handleFinish()) {
+            break;
+        }
         size = 0;
         AVCodecContext *codec_context = audio_codec_context;
         BlockQueue<Element> *queue = &audio_queue;
@@ -239,13 +256,14 @@ int RealPlayer::audioDecodeOneFrame() {
             av_packet_free(&packet);
             return 0;
         }
-        int ret = avcodec_receive_frame(codec_context, frame);
+        result = avcodec_receive_frame(codec_context, frame);
         //LOGI("ret = %d", ret);
-        if (ret == 0) {
+        if (result == 0) {
+            audio_clock_ = packet->pts * av_q2d(format_context_->streams[audio_stream_index]->time_base);
             int nb = swr_convert(swr_context, &(audio_out_buffer), out_nb_samples_,
                                  (const uint8_t **) frame->data, frame->nb_samples);
             size = nb * out_channels_ * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-            LOGI("okunu channels = %d nb_samples: %d, channel_layout: %lu, count: %d", frame->channels, frame->nb_samples, frame->channel_layout, out_nb_samples_);
+            //LOGI("okunu channels = %d nb_samples: %d, channel_layout: %lu, count: %d", frame->channels, frame->nb_samples, frame->channel_layout, out_nb_samples_);
             audioPlayer.setAudioData(audio_out_buffer, size);
             av_packet_unref(packet);
             break;
@@ -277,8 +295,19 @@ void RealPlayer::adjustVideoScale() {
     LOGI("adjustVideoScale: vw: %d, vh: %d, sw: %d, sh: %d", video_width, video_height, scale_video_width, scale_video_height);
 }
 
-void RealPlayer::consumer(int index) {
-    LOGI("consumer index = %d videoIndex = %d", index, video_stream_index);
+bool RealPlayer::handleFinish() {
+    if (video_queue.is_empty() && audio_queue.is_empty()) {
+        video_queue.stop();
+        audio_queue.stop();
+        finish = true;
+        LOGI("finish: %d", finish);
+        release();
+    }
+    return finish;
+}
+
+void RealPlayer::videoDecode(int index) {
+    LOGI("videoDecode index = %d videoIndex = %d", index, video_stream_index);
     AVCodecContext *codec_context;
     AVStream *stream;
     BlockQueue<Element> *queue;
@@ -291,10 +320,18 @@ void RealPlayer::consumer(int index) {
     }
     AVFrame *frame = av_frame_alloc();
     for (;;) {
+        if (handleFinish()) {
+            break;
+        }
         AVPacket *packet = queue->pop();
         if (packet == nullptr) {
             LOGI("consume packet is null");
             break;
+        }
+        while (avcodec_receive_frame(codec_context, frame) == 0) {
+            if (index == video_stream_index) {
+                video_play(frame);
+            }
         }
         result = avcodec_send_packet(codec_context, packet);
         if (result < 0 && result != AVERROR(EAGAIN) && result != AVERROR_EOF) {
@@ -302,15 +339,9 @@ void RealPlayer::consumer(int index) {
             av_packet_free(&packet);
             continue;
         }
-        while (avcodec_receive_frame(codec_context, frame) == 0) {
-//            LOGI("receive frame: %d", frame->width);
-            if (index == video_stream_index) {
-                video_play(frame);
-            }
-        }
         av_packet_unref(packet);
     }
-    LOGI("consumer end index = %d video_queue.size = %d", index, video_queue.size());
+    LOGI("videoDecode end index = %d video_queue.size = %d", index, video_queue.size());
     return;
 }
 

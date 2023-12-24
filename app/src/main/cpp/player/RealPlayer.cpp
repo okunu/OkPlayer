@@ -199,17 +199,20 @@ void RealPlayer::produce() {
 int RealPlayer::audio_prepare() {
     AVCodecContext *codec_context = audio_codec_context;
     swr_context = swr_alloc();
-    audio_out_buffer = (uint8_t *) av_malloc(1024 * 2);
-    uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
-    enum AVSampleFormat out_format = AV_SAMPLE_FMT_S16;
-    int out_sample_rate = audio_codec_context->sample_rate;
+    out_channel_layout_ = AV_CH_LAYOUT_STEREO;
+    out_format_ = AV_SAMPLE_FMT_S16;
+    out_sample_rate_ = audio_codec_context->sample_rate;
+    out_nb_samples_ = av_rescale_rnd(audio_codec_context->frame_size,
+                                     out_sample_rate_, audio_codec_context->sample_rate, AV_ROUND_UP);
+    out_channels_ = av_get_channel_layout_nb_channels(out_channel_layout_);
+    //这个buf可以弄大点，为了冗余，但这样算是最小数量
+    audio_out_buffer = (uint8_t *) av_malloc(out_nb_samples_ * out_channels_);
     swr_alloc_set_opts(swr_context,
-                       out_channel_layout, out_format, out_sample_rate,
+                       out_channel_layout_, out_format_, out_sample_rate_,
                        codec_context->channel_layout, codec_context->sample_fmt,
                        codec_context->sample_rate,
                        0, NULL);
     swr_init(swr_context);
-    out_channel = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
     audioPlayer.setCallback([&]() {
         return this->audioDecodeOneFrame();
     });
@@ -239,12 +242,10 @@ int RealPlayer::audioDecodeOneFrame() {
         int ret = avcodec_receive_frame(codec_context, frame);
         //LOGI("ret = %d", ret);
         if (ret == 0) {
-            int count = av_rescale_rnd(frame->nb_samples, audio_codec_context->sample_rate, audio_codec_context->sample_rate, AV_ROUND_UP);
-            int nb = swr_convert(swr_context, &(audio_out_buffer), count,
+            int nb = swr_convert(swr_context, &(audio_out_buffer), out_nb_samples_,
                                  (const uint8_t **) frame->data, frame->nb_samples);
-            int out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
-            size = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-            LOGI("okunu channels = %d nb_samples: %d, channel_layout: %lu, count: %d", frame->channels, frame->nb_samples, frame->channel_layout, count);
+            size = nb * out_channels_ * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+            LOGI("okunu channels = %d nb_samples: %d, channel_layout: %lu, count: %d", frame->channels, frame->nb_samples, frame->channel_layout, out_nb_samples_);
             audioPlayer.setAudioData(audio_out_buffer, size);
             av_packet_unref(packet);
             break;

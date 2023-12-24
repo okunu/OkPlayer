@@ -70,10 +70,20 @@ private:
     int audio_stream_index;
     AVCodecContext *audio_codec_context;
     BlockQueue<Element> audio_queue;
-    uint8_t *audio_out_buffer;
     struct SwrContext *swr_context;
-    int out_channel;
     AudioPlayer audioPlayer;
+
+    //采样格式，一次采样使用多少字节存储
+    enum AVSampleFormat out_format_;
+    //采样频率，常见的有44100
+    int out_sample_rate_;
+    //通道layout，声道布局，但并不是直接的声道数量
+    uint64_t out_channel_layout_;
+    //一帧中，单声道里有多少个采样数量
+    int out_nb_samples_;
+    //声道数
+    int out_channels_;
+    uint8_t *audio_out_buffer;
 
     ThreadPool pool_{3};
 

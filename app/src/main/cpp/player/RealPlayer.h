@@ -65,8 +65,6 @@ private:
     int video_stream_index;
     AVCodecContext *video_codec_context;
     struct SwsContext *sws_context;
-    uint8_t *video_out_buffer;
-    AVFrame *rgba_frame;
     BlockQueue<Element> video_queue;
 
     int audio_stream_index;
@@ -81,10 +79,11 @@ private:
 
     VideoShader shader_;
     EglDisplay display_;
-    int width_;
-    int height_;
+    int screen_width_;
+    int screen_height_;
 
-    uint8_t *yuv_data[3];
+    uint8_t *yuv_data[4];
+    int yuv_linesize[4];
     int scale_video_width;
     int scale_video_height;
     uint16_t video_width;

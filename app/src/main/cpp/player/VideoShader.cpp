@@ -20,11 +20,11 @@ void VideoShader::init() {
 }
 
 void VideoShader::onSurfaceChanged(int width, int height, int sw, int sh) {
-    width_ = 716;
-    height_ = 1280;
+    screen_width_ = width;
+    screen_height_ = height;
     scale_width = sw;
     scale_height = sh;
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, screen_width_, screen_height_);
     prepareTexture();
 }
 
@@ -64,19 +64,19 @@ void VideoShader::prepareTexture() {
     glBindTexture(GL_TEXTURE_2D, texture[0]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width_, height_, 0, GL_LUMINANCE,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, scale_width, scale_height, 0, GL_LUMINANCE,
                  GL_UNSIGNED_BYTE, NULL);
 
     glBindTexture(GL_TEXTURE_2D, texture[1]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width_/2, height_/2, 0, GL_LUMINANCE,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, scale_width/2, scale_height/2, 0, GL_LUMINANCE,
                  GL_UNSIGNED_BYTE, NULL);
 
     glBindTexture(GL_TEXTURE_2D, texture[2]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width_/2, height_/2, 0, GL_LUMINANCE,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, scale_width/2, scale_height/2, 0, GL_LUMINANCE,
                  GL_UNSIGNED_BYTE, NULL);
 }
 

@@ -32,8 +32,8 @@ private:
     Camera camera;
     GLuint texture[3];
     GLuint vao_;
-    int width_;
-    int height_;
+    int screen_width_;
+    int screen_height_;
 
     uint8_t *yuv_data[3];
     int scale_width;

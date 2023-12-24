@@ -90,37 +90,25 @@ int RealPlayer::codec_init(AVMediaType type) {
 int RealPlayer::video_prepare() {
     LOGI("video_prepare");
     AVCodecContext *codec_context = video_codec_context;
-    int videoWidth = codec_context->width;
-    int videoHeight = codec_context->height;
-    rgba_frame = av_frame_alloc();
-    int buffer_size = av_image_get_buffer_size(AV_PIX_FMT_RGBA, videoWidth, videoHeight, 1);
-    video_out_buffer = (uint8_t *) av_malloc(buffer_size * sizeof(uint8_t));
-    av_image_fill_arrays(rgba_frame->data, rgba_frame->linesize,
-                         video_out_buffer, AV_PIX_FMT_RGBA, videoWidth, videoHeight, 1);
-    sws_context = sws_getContext(videoWidth, videoHeight, codec_context->pix_fmt,
+    sws_context = sws_getContext(video_width, video_height, codec_context->pix_fmt,
                                  scale_video_width, scale_video_height, AV_PIX_FMT_YUV420P, SWS_BILINEAR,
                                  nullptr, nullptr, nullptr);
-    yuv_data[0] = new uint8_t[scale_video_width * scale_video_height];
-    yuv_data[1] = new uint8_t[scale_video_width * scale_video_height >> 2];
-    yuv_data[2] = new uint8_t[scale_video_width * scale_video_height >> 2];
+    av_image_alloc(yuv_data, yuv_linesize, scale_video_width, scale_video_height, AV_PIX_FMT_YUV420P, 1);
     display_.bindCurrent();
     shader_.init();
-    shader_.onSurfaceChanged(width_, height_, scale_video_width, scale_video_height);
+    shader_.onSurfaceChanged(screen_width_, screen_height_, scale_video_width, scale_video_height);
     return 1;
 }
 
 void RealPlayer::video_play(AVFrame *frame) {
     if (scale_video_width != video_width || scale_video_height != video_height) {
-        uint8_t* local_yuv_data[4];
-        int yuv_linesize[4];
-        av_image_alloc(local_yuv_data, yuv_linesize, scale_video_width, scale_video_height, AV_PIX_FMT_YUV420P, 1);
-        sws_scale(sws_context, frame->data, frame->linesize, 0, video_height, local_yuv_data, yuv_linesize);
-        avFrameToYuvData(local_yuv_data, scale_video_width, scale_video_height, yuv_data, yuv_linesize);
+        sws_scale(sws_context, frame->data, frame->linesize, 0, video_height, yuv_data, yuv_linesize);
     }
     shader_.draw(yuv_data);
     display_.swapBuffer();
 }
 
+//此方法虽然暂时不用，但思路值得学习，如果要去除绿边，即编码自动添加的padding，需要通过转换一次宽高实现
 void
 RealPlayer::avFrameToYuvData(uint8_t **src_data, int src_width, int src_height, uint8_t **dst_data,
                              int *line_size) {
@@ -162,7 +150,8 @@ void RealPlayer::release() {
     audio_codec_context = nullptr;
 
     sws_freeContext(sws_context);
-    av_frame_free(&(rgba_frame));
+
+    av_free(yuv_data);
 }
 
 void RealPlayer::play_start() {
@@ -210,7 +199,7 @@ void RealPlayer::produce() {
 int RealPlayer::audio_prepare() {
     AVCodecContext *codec_context = audio_codec_context;
     swr_context = swr_alloc();
-    audio_out_buffer = (uint8_t *) av_malloc(44100 * 2);
+    audio_out_buffer = (uint8_t *) av_malloc(1024 * 2);
     uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
     enum AVSampleFormat out_format = AV_SAMPLE_FMT_S16;
     int out_sample_rate = audio_codec_context->sample_rate;
@@ -250,11 +239,12 @@ int RealPlayer::audioDecodeOneFrame() {
         int ret = avcodec_receive_frame(codec_context, frame);
         //LOGI("ret = %d", ret);
         if (ret == 0) {
-            int nb = swr_convert(swr_context, &(audio_out_buffer), 44100 * 2,
+            int count = av_rescale_rnd(frame->nb_samples, audio_codec_context->sample_rate, audio_codec_context->sample_rate, AV_ROUND_UP);
+            int nb = swr_convert(swr_context, &(audio_out_buffer), count,
                                  (const uint8_t **) frame->data, frame->nb_samples);
             int out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
             size = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-            //LOGI("okunu size = %d channels: %d", size, frame->nb_samples);
+            LOGI("okunu channels = %d nb_samples: %d, channel_layout: %lu, count: %d", frame->channels, frame->nb_samples, frame->channel_layout, count);
             audioPlayer.setAudioData(audio_out_buffer, size);
             av_packet_unref(packet);
             break;
@@ -324,7 +314,7 @@ void RealPlayer::consumer(int index) {
 }
 
 void RealPlayer::surface_changed(int w, int h, EglDisplay &display) {
-    width_ = w;
-    height_ = h;
+    screen_width_ = w;
+    screen_height_ = h;
     display_ = display;
 }

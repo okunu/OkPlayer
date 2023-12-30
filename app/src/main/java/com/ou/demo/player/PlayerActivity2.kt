@@ -32,6 +32,10 @@ class PlayerActivity2 : AppCompatActivity() {
                 player.realPlay(path, binding.surfaceView.holder.surface)
             }
         }
+
+        binding.btnFast.setOnClickListener {
+            player.realSeek()
+        }
     }
 
     fun checkFile(assetPath: String, action: (path: String) -> Unit): String {

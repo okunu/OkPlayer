@@ -315,8 +315,10 @@ void PlayerWrap::consumer(int index) {
     double tatal = stream->duration * av_q2d(stream->time_base);
     AVFrame *frame = av_frame_alloc();
     for (;;) {
-        AVPacket *packet = queue->pop();
-        if (packet == nullptr) {
+        AVPacket *packet = av_packet_alloc();
+        //这段代码还有问题,给指针赋值要二级指针，这样没用
+        bool r = queue->pop(packet);
+        if (!r) {
             LOGI("consume packet is null");
             break;
         }

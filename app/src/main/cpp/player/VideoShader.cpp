@@ -14,8 +14,8 @@ VideoShader::~VideoShader() {
 
 void VideoShader::init() {
     shader = Shader("video/video.vert", "video/video.frag");
-//    camera = Camera(glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 1.0f, 0.0f),
-//                    -90.0f, 0.0f);
+    camera = Camera(glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+                    -90.0f, 0.0f);
     prepareData();
 }
 
@@ -24,6 +24,27 @@ void VideoShader::onSurfaceChanged(int width, int height, int sw, int sh) {
     screen_height_ = height;
     scale_width = sw;
     scale_height = sh;
+    float originRatio = scale_width * 1.0f / scale_height * 1.0f;
+    float worldRatio = screen_width_ * 1.0f / screen_height_ * 1.0f;
+    if (screen_width_ > screen_height_) {
+        if (originRatio > worldRatio) {
+            actualRatio = originRatio / worldRatio;
+            projection_ = glm::ortho(-1.0f, 1.0f, -actualRatio, actualRatio, 0.1f, 100.0f);
+        } else {
+            actualRatio = worldRatio / originRatio;
+            projection_ = glm::ortho(-actualRatio, actualRatio, -1.0f, 1.0f, 0.1f, 100.0f);
+        }
+    } else {
+        if (originRatio > worldRatio) {
+            actualRatio = originRatio / worldRatio;
+            projection_ = glm::ortho(-1.0f, 1.0f, -actualRatio, actualRatio, 0.1f, 100.0f);
+        } else {
+            actualRatio = worldRatio / originRatio;
+            projection_ = glm::ortho(-actualRatio, actualRatio, -1.0f, 1.0f, 0.1f, 100.0f);
+        }
+    }
+    LOGI("sw:%d, sh:%d, vw:%d, vh:%d, origin:%f, world:%f, actual:%f",
+         screen_width_, screen_height_, scale_width, scale_height, originRatio, worldRatio, actualRatio);
     glViewport(0, 0, screen_width_, screen_height_);
     prepareTexture();
 }
@@ -110,11 +131,11 @@ void VideoShader::draw(uint8_t* data[]) {
     shader.setInt("vTexture", 2);
 
 //    glm::mat4 projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
-//    glm::mat4 view = camera.getViewMatrix();
-//    glm::mat4 model = glm::mat4(1.0f);
-//    shader.setMat4("projection", projection);
-//    shader.setMat4("view", view);
-//    shader.setMat4("model", model);
+    glm::mat4 view = camera.getViewMatrix();
+    glm::mat4 model = glm::mat4(1.0f);
+    shader.setMat4("projection", projection_);
+    shader.setMat4("view", view);
+    shader.setMat4("model", model);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (const void*)0);
 }

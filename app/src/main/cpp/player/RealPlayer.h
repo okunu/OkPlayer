@@ -33,14 +33,24 @@ extern "C" {
 
 using namespace std;
 
+typedef struct PacketData {
+    AVPacket* pkt;
+    int serial;
+    PacketData(): pkt(nullptr), serial(0) {};
+    PacketData(AVPacket* packet, int n): pkt(packet), serial(n){};
+    PacketData(PacketData& data): pkt(data.pkt), serial(data.serial) {};
+} PacketData;
+
 class RealPlayer {
 public:
-    typedef AVPacket* Element;
+    typedef PacketData Element;
     RealPlayer();
     ~RealPlayer();
     int player_init(const char* path);
     void play_start();
     void surface_changed(int w, int h, EglDisplay& display);
+    void seek();
+    void playWrap(const char* path);
 
 private:
     int format_init(const char *path);
@@ -102,6 +112,12 @@ private:
 
     bool finish = false;
     double audio_clock_;
+
+    const char* path_ = nullptr;
+    bool pause = false;
+    mutex pauseMutex;
+    condition_variable pause_cv;
+    int serial = 0;
 };
 
 #endif //OKPLAYER_REALPLAYER_H

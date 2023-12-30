@@ -38,6 +38,9 @@ private:
     uint8_t *yuv_data[3];
     int scale_width;
     int scale_height;
+
+    float actualRatio;
+    glm::mat4 projection_;
 };
 
 #endif //OKPLAYER_VIDEOSHADER_H

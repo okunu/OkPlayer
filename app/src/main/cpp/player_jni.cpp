@@ -348,10 +348,7 @@ JNIEXPORT void JNICALL
 Java_com_ou_demo_player_NativePlayer2_play(JNIEnv *env, jobject thiz, jlong ref, jstring _path) {
     RealPlayer* player = reinterpret_cast<RealPlayer*>(ref);
     const char* path = env->GetStringUTFChars(_path, 0);
-    int result = player->player_init(path);
-    if (result > 0) {
-        player->play_start();
-    }
+    player->playWrap(path);
     env->ReleaseStringUTFChars(_path, path);
 }
 
@@ -360,4 +357,10 @@ JNIEXPORT jlong JNICALL
 Java_com_ou_demo_player_NativePlayer2_init_1player(JNIEnv *env, jobject thiz) {
     RealPlayer* player = new RealPlayer();
     return reinterpret_cast<jlong>(player);
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ou_demo_player_NativePlayer2_seek(JNIEnv *env, jobject thiz, jlong ref) {
+    RealPlayer* player = reinterpret_cast<RealPlayer*>(ref);
+    player->seek();
 }

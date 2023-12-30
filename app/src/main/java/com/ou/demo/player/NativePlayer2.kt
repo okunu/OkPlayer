@@ -69,8 +69,16 @@ class NativePlayer2 private constructor(){
         }
     }
 
+    fun realSeek() {
+        if (nativeRef != 0L) {
+            seek(nativeRef)
+        }
+    }
+
     external fun play(ref: Long, _path: String)
 
     external fun init_player(): Long
+
+    external fun seek(ref: Long)
 
 }

@@ -92,9 +92,11 @@ int RealPlayer::video_prepare() {
     LOGI("video_prepare");
     AVCodecContext *codec_context = video_codec_context;
     sws_context = sws_getContext(video_width, video_height, codec_context->pix_fmt,
-                                 scale_video_width, scale_video_height, AV_PIX_FMT_YUV420P, SWS_BILINEAR,
+                                 scale_video_width, scale_video_height, AV_PIX_FMT_YUV420P,
+                                 SWS_BILINEAR,
                                  nullptr, nullptr, nullptr);
-    av_image_alloc(yuv_data, yuv_linesize, scale_video_width, scale_video_height, AV_PIX_FMT_YUV420P, 1);
+    av_image_alloc(yuv_data, yuv_linesize, scale_video_width, scale_video_height,
+                   AV_PIX_FMT_YUV420P, 1);
     display_.bindCurrent();
     shader_.init();
     shader_.onSurfaceChanged(screen_width_, screen_height_, scale_video_width, scale_video_height);
@@ -108,14 +110,14 @@ void RealPlayer::video_play(AVFrame *frame) {
     timestamp = av_frame_get_best_effort_timestamp(frame) * av_q2d(stream->time_base);
     double frame_rate = av_q2d(stream->avg_frame_rate);
     frame_rate += frame->repeat_pict * (frame_rate * 0.5);
-    //LOGI("timestamp = %f", timestamp);
+    // LOGI("timestamp = %f  pts: %ld", timestamp, frame->pts);
     if (timestamp == 0.0) {
         usleep((unsigned long) (frame_rate * 1000));
 //                    std::this_thread::sleep_for(std::chrono::milliseconds((unsigned long)frame_rate));
     } else {
         if (fabs(timestamp - audio_clock) > AV_SYNC_THRESHOLD_MIN &&
             fabs(timestamp - audio_clock) < AV_SYNC_THRESHOLD_MAX) {
-            LOGI("time diff: %f", (timestamp - audio_clock));
+//            LOGI("audio_clock: %f", (audio_clock));
             if (timestamp > audio_clock) {
                 usleep((unsigned long) ((timestamp - audio_clock) * 1000000));
 //                            std::this_thread::sleep_for(std::chrono::milliseconds((unsigned long) ((timestamp - audio_clock) * 1000)));
@@ -123,7 +125,8 @@ void RealPlayer::video_play(AVFrame *frame) {
         }
     }
     if (scale_video_width != video_width || scale_video_height != video_height) {
-        sws_scale(sws_context, frame->data, frame->linesize, 0, video_height, yuv_data, yuv_linesize);
+        sws_scale(sws_context, frame->data, frame->linesize, 0, video_height, yuv_data,
+                  yuv_linesize);
     }
     shader_.draw(yuv_data);
     display_.swapBuffer();
@@ -137,9 +140,9 @@ RealPlayer::avFrameToYuvData(uint8_t **src_data, int src_width, int src_height, 
     uint32_t pitchU = src_width >> 1;
     uint32_t pitchV = src_width >> 1;
 
-    uint8_t* avy = dst_data[0];
-    uint8_t* avu = dst_data[1];
-    uint8_t* avv = dst_data[2];
+    uint8_t *avy = dst_data[0];
+    uint8_t *avu = dst_data[1];
+    uint8_t *avv = dst_data[2];
 
     for (int y_index = 0; y_index < src_height; ++y_index) {
         memcpy(avy, src_data[0] + y_index * line_size[0], pitchY);
@@ -172,8 +175,27 @@ void RealPlayer::release() {
 
     sws_freeContext(sws_context);
 
-    av_free(yuv_data);
+    av_freep(yuv_data);
     av_free(audio_out_buffer);
+}
+
+void RealPlayer::playWrap(const char *path) {
+    if (path_ == nullptr || strcmp(path, path_) == 0) {
+        path_ = path;
+        int result = player_init(path);
+        if (result > 0) {
+            play_start();
+        }
+        return;
+    }
+    unique_lock<mutex> lock(pauseMutex);
+    if (pause) {
+        pause = false;
+        pause_cv.notify_all();
+    } else {
+        pause = true;
+    }
+    lock.unlock();
 }
 
 void RealPlayer::play_start() {
@@ -192,20 +214,29 @@ void RealPlayer::play_start() {
 
 void RealPlayer::produce() {
     LOGI("produce");
-    AVPacket *packet = av_packet_alloc();
     for (;;) {
+        unique_lock<mutex> lock(pauseMutex);
+        while (pause) {
+            pause_cv.wait(lock, [this]() { return !pause; });
+        }
+        lock.unlock();
+
+        AVPacket *packet = av_packet_alloc();
         int result = av_read_frame(format_context_, packet);
         if (result < 0) {
             LOGI("avreadframe is less 0");
+            av_packet_free(&packet);
             break;
         }
+        PacketData data{packet, serial};
         if (packet->stream_index == video_stream_index) {
-            video_queue.push(packet);
+            video_queue.push(data);
         } else if (packet->stream_index == audio_stream_index) {
-            audio_queue.push(packet);
+            audio_queue.push(data);
         }
-        packet = av_packet_alloc();
     }
+    video_queue.stop();
+    audio_queue.stop();
     LOGI("produce video size = %d  audio size = %d", video_queue.size(), audio_queue.size());
     LOGI("produce end");
 }
@@ -217,7 +248,8 @@ int RealPlayer::audio_prepare() {
     out_format_ = AV_SAMPLE_FMT_S16;
     out_sample_rate_ = audio_codec_context->sample_rate;
     out_nb_samples_ = av_rescale_rnd(audio_codec_context->frame_size,
-                                     out_sample_rate_, audio_codec_context->sample_rate, AV_ROUND_UP);
+                                     out_sample_rate_, audio_codec_context->sample_rate,
+                                     AV_ROUND_UP);
     out_channels_ = av_get_channel_layout_nb_channels(out_channel_layout_);
     //这个buf可以弄大点，为了冗余，但这样算是最小数量
     audio_out_buffer = (uint8_t *) av_malloc(out_nb_samples_ * out_channels_);
@@ -240,26 +272,36 @@ int RealPlayer::audioDecodeOneFrame() {
         if (handleFinish()) {
             break;
         }
+        unique_lock<mutex> lock(pauseMutex);
+        while (pause) {
+            pause_cv.wait(lock, [this]() { return !pause; });
+        }
+        lock.unlock();
         size = 0;
         AVCodecContext *codec_context = audio_codec_context;
         BlockQueue<Element> *queue = &audio_queue;
         int result = -1;
         AVFrame *frame = av_frame_alloc();
-        AVPacket *packet = queue->pop();
-        if (packet == nullptr) {
+        Element element;
+        bool ret = queue->pop(element);
+        AVPacket *packet = element.pkt;
+        if (!ret) {
+            LOGI("consume audio packet is null");
             break;
         }
         //LOGI("packet: %d", packet->stream_index);
         result = avcodec_send_packet(codec_context, packet);
         if (result < 0 && result != AVERROR(EAGAIN) && result != AVERROR_EOF) {
-            LOGI("Player Error : codec step 1 fail audio");
+            LOGI("Player Error : codec step 1 fail audio, addr: %p", packet);
             av_packet_free(&packet);
             return 0;
         }
         result = avcodec_receive_frame(codec_context, frame);
         //LOGI("ret = %d", ret);
         if (result == 0) {
-            audio_clock_ = packet->pts * av_q2d(format_context_->streams[audio_stream_index]->time_base);
+            audio_clock_ =
+                    frame->pts * av_q2d(format_context_->streams[audio_stream_index]->time_base);
+            // LOGI("audio_clock_: %f, pts: %ld", (audio_clock_), frame->pts);
             int nb = swr_convert(swr_context, &(audio_out_buffer), out_nb_samples_,
                                  (const uint8_t **) frame->data, frame->nb_samples);
             size = nb * out_channels_ * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
@@ -268,7 +310,7 @@ int RealPlayer::audioDecodeOneFrame() {
             av_packet_unref(packet);
             break;
         } else {
-            LOGI("error and continue");
+            LOGI("error and continue, audio_clock_: %f", audio_clock_);
             continue;
         }
     }
@@ -292,16 +334,16 @@ void RealPlayer::adjustVideoScale() {
     } else {
         scale_video_height = video_height;
     }
-    LOGI("adjustVideoScale: vw: %d, vh: %d, sw: %d, sh: %d", video_width, video_height, scale_video_width, scale_video_height);
+    LOGI("adjustVideoScale: vw: %d, vh: %d, sw: %d, sh: %d", video_width, video_height,
+         scale_video_width, scale_video_height);
 }
 
 bool RealPlayer::handleFinish() {
-    if (video_queue.is_empty() && audio_queue.is_empty()) {
-        video_queue.stop();
-        audio_queue.stop();
+    if (video_queue.is_empty() && video_queue.isStop() && audio_queue.is_empty() &&
+        audio_queue.isStop()) {
         finish = true;
         LOGI("finish: %d", finish);
-        release();
+//        release();
     }
     return finish;
 }
@@ -309,22 +351,29 @@ bool RealPlayer::handleFinish() {
 void RealPlayer::videoDecode(int index) {
     LOGI("videoDecode index = %d videoIndex = %d", index, video_stream_index);
     AVCodecContext *codec_context;
-    AVStream *stream;
     BlockQueue<Element> *queue;
     int result = -1;
     if (index == video_stream_index) {
         codec_context = video_codec_context;
-        stream = format_context_->streams[video_stream_index];
         queue = &video_queue;
         video_prepare();
     }
     AVFrame *frame = av_frame_alloc();
+    AVPacket *packet = nullptr;
     for (;;) {
         if (handleFinish()) {
             break;
         }
-        AVPacket *packet = queue->pop();
-        if (packet == nullptr) {
+        unique_lock<mutex> lock(pauseMutex);
+        while (pause) {
+            pause_cv.wait(lock, [this]() { return !pause; });
+        }
+        lock.unlock();
+
+        Element element;
+        bool r = queue->pop(element);
+        packet = element.pkt;
+        if (!r) {
             LOGI("consume packet is null");
             break;
         }
@@ -335,13 +384,13 @@ void RealPlayer::videoDecode(int index) {
         }
         result = avcodec_send_packet(codec_context, packet);
         if (result < 0 && result != AVERROR(EAGAIN) && result != AVERROR_EOF) {
-            LOGI("Player Error : codec step 1 fail");
-            av_packet_free(&packet);
-            continue;
+            LOGI("Player Error : codec step 1 fail size: %d, addr: %p, audio_clock_: %f",
+                 queue->size(), packet, audio_clock_);
         }
         av_packet_unref(packet);
     }
     LOGI("videoDecode end index = %d video_queue.size = %d", index, video_queue.size());
+    av_packet_free(&packet);
     return;
 }
 
@@ -349,4 +398,30 @@ void RealPlayer::surface_changed(int w, int h, EglDisplay &display) {
     screen_width_ = w;
     screen_height_ = h;
     display_ = display;
+}
+
+void RealPlayer::seek() {
+    unique_lock<mutex> lock(pauseMutex);
+    if (!pause) {
+        pause = true;
+        video_queue.clear();
+        audio_queue.clear();
+
+        auto pos = audio_clock_;
+        int incr = 5;
+        int64_t seekRel = incr * AV_TIME_BASE;
+        pos += incr;
+        int64_t seekPos = (int64_t) (pos * AV_TIME_BASE);
+
+        int64_t seek_min = seekPos - seekRel + 2;
+        int64_t seek_max = INT64_MAX;
+        int ret = avformat_seek_file(format_context_, -1, seek_min, seekPos, seek_max, 0);
+        LOGI("ret: %d, seek_min：%ld, pos: %f", ret, seek_min, pos);
+
+        pause = false;
+        pause_cv.notify_all();
+    }
+    lock.unlock();
+
+
 }
